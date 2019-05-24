@@ -8,7 +8,7 @@ endif
 MKDIR_BIN=mkdir -p $(PWD)/bin
 
 
-all: mkdirBin bin/Z_EE_Channel.exe
+all: mkdirBin bin/Z_EE_Channel.exe bin/Z_mumu_Channel.exe bin/massPeakPlots.exe
 
 mkdirBin:
 	$(MKDIR_BIN)
@@ -16,6 +16,13 @@ mkdirBin:
 
 bin/Z_EE_Channel.exe: src/Z_EE_Channel.C
 	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -o bin/Z_EE_Channel.exe src/Z_EE_Channel.C
+
+bin/Z_mumu_Channel.exe: src/Z_mumu_Channel.C
+	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -o bin/Z_mumu_Channel.exe src/Z_mumu_Channel.C
+
+bin/massPeakPlots.exe: src/massPeakPlots.C
+	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -o bin/massPeakPlots.exe src/massPeakPlots.C
+
 
 clean:
 	rm -f $(PWD)/include/*~
