@@ -40,8 +40,8 @@ int ElectronSelector::getKinematicIndex(bool isBarrel, bool isCentral){
 
 bool ElectronSelector::isGoodElectron(WorkingPoint wp, int hiBin, float eta, float sigIetaIeta, float dEta, float dPhi, int missHits, float HoverE, float EoverPInv, float d0, float dz){
   bool isBarrel = false;
-  if(TMath::Abs(eta)<1.5) isBarrel = true;
-  else if(TMath::Abs(eta) >= 1.5 && TMath::Abs(eta)<2.4) isBarrel = false;
+  if(TMath::Abs(eta)<1.4442) isBarrel = true;
+  else if(TMath::Abs(eta) >= 1.4442 && TMath::Abs(eta)<2.4) isBarrel = false;
   else return false;
   
   bool isCentral = false;
@@ -55,10 +55,10 @@ bool ElectronSelector::isGoodElectron(WorkingPoint wp, int hiBin, float eta, flo
   if(dEta > dEtaCut[indx][wp]) return false;
   if(dPhi > dPhiCut[indx][wp]) return false;
   if(HoverE > HoverECut[indx][wp]) return false;
-  if(EoverPInv > EoverPInvCut[indx][wp]) return false;
+  if(TMath::Abs(EoverPInv) > EoverPInvCut[indx][wp]) return false;
   if(missHits > missHitsCut[wp]) return false;
-  if(d0 > d0Cut[wp]) return false;
-  if(dz > dzCut[wp]) return false;
+  if(TMath::Abs( d0 ) > d0Cut[wp]) return false;
+  if(TMath::Abs( dz ) > dzCut[wp]) return false;
 
 
   return true;

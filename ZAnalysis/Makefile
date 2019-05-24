@@ -15,7 +15,7 @@ mkdirBin:
 
 
 bin/Z_EE_Channel.exe: src/Z_EE_Channel.C
-	$(CXX) $(CXXFLAGS) $(ROOT) -o bin/Z_EE_Channel.exe src/Z_EE_Channel.C
+	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -o bin/Z_EE_Channel.exe src/Z_EE_Channel.C
 
 clean:
 	rm -f $(PWD)/include/*~
