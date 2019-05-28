@@ -1,9 +1,11 @@
 #include "include/centralityTool.h"
 #include "include/Settings.h"
+#include "TStyle.h"
 #include "TFile.h"
 #include "TH1D.h"
 #include "TMath.h"
 #include "TCanvas.h"
+#include "TLegend.h"
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -29,10 +31,13 @@ void plotMassPeaks(std::string Zee, std::string Zmumu){
     massPeakOS_MuMu[i] = (TH1D*)ZmumuFile->Get(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)));
     massPeakSS_MuMu[i] = (TH1D*)ZmumuFile->Get(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)));
 
+    gStyle->SetPadTickX(1);
+    gStyle->SetPadTickY(1);
+
     TCanvas * c1 = new TCanvas("c1","c1",800,800);
     c1->SetLeftMargin(0.2);
     c1->SetBottomMargin(0.2);
-    massPeakOS_MuMu[i]->GetYaxis()->SetRangeUser(0, massPeakOS_MuMu[i]->GetMaximum()*1.3);  
+    massPeakOS_MuMu[i]->GetYaxis()->SetRangeUser(0, massPeakOS_MuMu[i]->GetMaximum()*1.4);  
     massPeakOS_MuMu[i]->GetXaxis()->SetTitle("m_{ll} (GeV)");
     massPeakOS_MuMu[i]->GetYaxis()->SetTitle("Counts");
     massPeakOS_MuMu[i]->GetXaxis()->CenterTitle();
@@ -45,22 +50,40 @@ void plotMassPeaks(std::string Zee, std::string Zmumu){
     massPeakOS_MuMu[i]->Draw("HIST");
     massPeakOS_EE[i]->SetLineColor(kBlack);
     massPeakOS_EE[i]->SetFillColor(kBlack);
-    massPeakOS_EE[i]->SetFillStyle(3444);
+    massPeakOS_EE[i]->SetFillStyle(3345);
     massPeakOS_EE[i]->Draw("HIST same");
-
-    massPeakSS_MuMu[i]->SetMarkerStyle(8);
-    massPeakSS_MuMu[i]->SetMarkerColor(kRed+1);
-
-    massPeakSS_EE[i]->SetMarkerStyle(25);
-    massPeakSS_EE[i]->SetMarkerColor(kBlack);
     
-    massPeakSS_MuMu[i]->Draw("p same");
+    massPeakSS_MuMu[i]->SetMarkerStyle(8);
+    massPeakSS_MuMu[i]->SetMarkerColor(kRed);
+
+    massPeakSS_EE[i]->SetMarkerStyle(21);
+    massPeakSS_EE[i]->SetMarkerColor(kBlue);
+    
     massPeakSS_EE[i]->Draw("p same");
+    massPeakSS_MuMu[i]->Draw("p same");
+
+    TLegend * leg = new TLegend(0.28,0.72,0.63,0.87);
+    leg->SetBorderSize(0);
+    leg->AddEntry(massPeakOS_MuMu[i],"Z #rightarrow #mu^{+}#mu^{-}","f");
+    leg->AddEntry(massPeakOS_EE[i],"Z #rightarrow e^{+}e^{-}","f");
+    leg->AddEntry(massPeakSS_MuMu[i],"Z #rightarrow #mu#mu (same sign)","p");
+    leg->AddEntry(massPeakSS_EE[i],"Z #rightarrow ee (same sign)","p");
+    leg->Draw("same");
+    
+    TLegend * leg2 = new TLegend(0.65,0.72+0.15*0.25,0.8,0.87);
+    leg2->SetBorderSize(0);
+    leg2->AddEntry((TObject*)0,"2018 PbPb","");
+    leg2->AddEntry((TObject*)0,Form("%d-%d %%",c.getCentBinLow(i), c.getCentBinHigh(i)),"");
+    leg2->AddEntry((TObject*)0,"p_{T}^{l} > 20 GeV","");
+    leg2->Draw("same");
+
 
     c1->SaveAs(Form("plots/massPeaks/massPeak_%d_%d.png",c.getCentBinLow(i),c.getCentBinHigh(i)));
     c1->SaveAs(Form("plots/massPeaks/massPeak_%d_%d.pdf",c.getCentBinLow(i),c.getCentBinHigh(i)));
     c1->SaveAs(Form("plots/massPeaks/massPeak_%d_%d.C",c.getCentBinLow(i),c.getCentBinHigh(i)));
-
+  
+    delete leg2; 
+    delete leg;
     delete c1;
   }
 
