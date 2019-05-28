@@ -13,9 +13,9 @@ class CentralityTool{
   bool isInsideBin(int hiBin, int i);
 
   private:
-  const int nCentBins = 21;
-  int centBinLow[21] = {0,5, 10,20,30,40,50,60,70,80,90, 0,  0, 10,30, 50, 70, 0, 30, 0, 50};
-  int centBinHigh[21] ={5,10,20,30,40,50,60,70,80,90,100,100,10,30,50, 70, 90, 30,100,50,100};
+  const int nCentBins = 22;
+  int centBinLow[22] = {0,5, 10,20,30,40,50,60,70,80,90, 0,  0, 10,30, 50, 70, 0, 30, 0, 50, 0};
+  int centBinHigh[22] ={5,10,20,30,40,50,60,70,80,90,100,100,10,30,50, 70, 90, 30,100,50,100,80};
 
 };
 
