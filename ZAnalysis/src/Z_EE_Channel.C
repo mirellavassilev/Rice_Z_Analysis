@@ -1,4 +1,5 @@
 #include "include/electronSelector.h"
+#include "include/electronTriggerMatching.h"
 #include "include/centralityTool.h"
 #include "include/Settings.h"
 #include "TLorentzVector.h"
@@ -13,6 +14,8 @@
 
 void doZ2EE(std::vector< std::string > files){
   ElectronSelector eSel = ElectronSelector();
+  ElectronTriggerMatcher matcher = ElectronTriggerMatcher();
+  ElecTrigObject eTrig = ElecTrigObject();
   Settings s = Settings();
 
   CentralityTool c = CentralityTool();
@@ -23,7 +26,7 @@ void doZ2EE(std::vector< std::string > files){
   
   for(int i = 0; i<nBins; i++){
     massPeakOS[i] = new TH1D(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{+}e^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
-    massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{#pm}e^{#pm}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
+    massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{#pm}e^{#pm}}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
   }  
 
   int nEle;
@@ -79,6 +82,15 @@ void doZ2EE(std::vector< std::string > files){
     skimTree->SetBranchAddress("phfCoincFilter2Th4",&phfCoincFilter2Th4);
     skimTree->SetBranchAddress("pclusterCompatibilityFilter",&pclusterCompatibilityFilter);
 
+    TTree * L1Tree = (TTree*)in->Get("l1object/L1UpgradeFlatTree");
+    L1Tree->SetBranchAddress("nEGs",&(eTrig.L1nEGs));
+    L1Tree->SetBranchAddress("egEta", &(eTrig.L1egEta));
+    L1Tree->SetBranchAddress("egPhi", &(eTrig.L1egPhi));
+
+    TTree * HLTObjTree = (TTree*)in->Get("hltobject/HLT_HIDoubleEle10GsfMass50_v");
+    HLTObjTree->SetBranchAddress("eta",&(eTrig.HLTEta));
+    HLTObjTree->SetBranchAddress("phi",&(eTrig.HLTPhi));
+
     for(unsigned int i = 0; i < eTree->GetEntries(); i++){
       eTree->GetEntry(i);
       if(nEle<2) continue;
@@ -89,6 +101,9 @@ void doZ2EE(std::vector< std::string > files){
       evtTree->GetEntry(i);
       if(TMath::Abs(vz)>15) continue;
 
+      L1Tree->GetEntry(i);
+      HLTObjTree->GetEntry(i);
+
       std::vector< int > goodElectrons;
    
       for(unsigned int j = 0; j < (unsigned int) nEle; j++){
@@ -97,9 +112,9 @@ void doZ2EE(std::vector< std::string > files){
         //veto on dead endcap region
         if(eleSCEta->at(j) < -1.39 && eleSCPhi->at(j) < -0.9 && eleSCPhi->at(j) > -1.6) continue;
 
+        //check electron qualty variables
         float dEta = TMath::Abs( eledEtaAtVtx->at(j) );
         float dPhi = TMath::Abs( eledPhiAtVtx->at(j) );
-        
         if(!eSel.isGoodElectron(ElectronSelector::WorkingPoint::loose, hiBin, eleSCEta->at(j), eleSigmaIEtaIEta->at(j), dEta, dPhi, eleMissHits->at(j), eleHoverE->at(j), eleEoverPInv->at(j), eleD0->at(j), eleDz->at(j))) continue;
 
         goodElectrons.push_back(j);
@@ -113,10 +128,21 @@ void doZ2EE(std::vector< std::string > files){
       TLorentzVector * elec2 = new TLorentzVector();
       for(unsigned int j = 0; j<goodElectrons.size(); j++){
         elec1->SetPtEtaPhiM(elePt->at(goodElectrons.at(j)), eleEta->at(goodElectrons.at(j)), elePhi->at(goodElectrons.at(j)), 0.000511);
+        
         for(unsigned int j2 = j+1; j2<goodElectrons.size(); j2++){
           elec2->SetPtEtaPhiM(elePt->at(goodElectrons.at(j2)), eleEta->at(goodElectrons.at(j2)), elePhi->at(goodElectrons.at(j2)), 0.000511);
           TLorentzVector Zcand = *elec1+*elec2;
           if(Zcand.M() < s.zMassRange[0] || Zcand.M() > s.zMassRange[1]) continue;      
+
+          //L1 trigger matching
+          bool isFirstElectronL1Matched =  matcher.isL1Matched(eleSCEta->at(goodElectrons.at(j)), eleSCPhi->at(goodElectrons.at(j)), eTrig);
+          bool isSecondElectronL1Matched =  matcher.isL1Matched(eleSCEta->at(goodElectrons.at(j2)), eleSCPhi->at(goodElectrons.at(j2)), eTrig);
+          if(! (isFirstElectronL1Matched || isSecondElectronL1Matched)) continue;
+
+          //HLT trigger matching
+          bool isFirstElectronHLTMatched = matcher.isHLTMatched(eleSCEta->at(goodElectrons.at(j)), eleSCPhi->at(goodElectrons.at(j)), eTrig);
+          bool isSecondElectronHLTMatched = matcher.isHLTMatched(eleSCEta->at(goodElectrons.at(j2)), eleSCPhi->at(goodElectrons.at(j2)), eTrig);
+          if(! (isFirstElectronHLTMatched && isSecondElectronHLTMatched)) continue;
    
           bool isOppositeSign =  eleCharge->at(goodElectrons.at(j)) != eleCharge->at(goodElectrons.at(j2));
           if(moreThan2) std::cout << j << " " << j2 << " " << Zcand.M() <<" " << Zcand.Pt() << " isOS? " << (int)isOppositeSign << std::endl;
