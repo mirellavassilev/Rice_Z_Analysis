@@ -86,10 +86,12 @@ void doZ2EE(std::vector< std::string > files){
     L1Tree->SetBranchAddress("nEGs",&(eTrig.L1nEGs));
     L1Tree->SetBranchAddress("egEta", &(eTrig.L1egEta));
     L1Tree->SetBranchAddress("egPhi", &(eTrig.L1egPhi));
+    L1Tree->SetBranchAddress("egEt", &(eTrig.L1egEt));
 
     TTree * HLTObjTree = (TTree*)in->Get("hltobject/HLT_HIDoubleEle10GsfMass50_v");
     HLTObjTree->SetBranchAddress("eta",&(eTrig.HLTEta));
     HLTObjTree->SetBranchAddress("phi",&(eTrig.HLTPhi));
+    HLTObjTree->SetBranchAddress("pt",&(eTrig.HLTPt));
 
     for(unsigned int i = 0; i < eTree->GetEntries(); i++){
       eTree->GetEntry(i);
@@ -134,14 +136,14 @@ void doZ2EE(std::vector< std::string > files){
           TLorentzVector Zcand = *elec1+*elec2;
           if(Zcand.M() < s.zMassRange[0] || Zcand.M() > s.zMassRange[1]) continue;      
 
-          //L1 trigger matching
-          bool isFirstElectronL1Matched =  matcher.isL1Matched(eleSCEta->at(goodElectrons.at(j)), eleSCPhi->at(goodElectrons.at(j)), eTrig);
-          bool isSecondElectronL1Matched =  matcher.isL1Matched(eleSCEta->at(goodElectrons.at(j2)), eleSCPhi->at(goodElectrons.at(j2)), eTrig);
+          //L1 trigger matching (1 L1 EG > 15 GeV)
+          bool isFirstElectronL1Matched =  matcher.isL1Matched(eleSCEta->at(goodElectrons.at(j)), eleSCPhi->at(goodElectrons.at(j)), eTrig, 15.0);
+          bool isSecondElectronL1Matched =  matcher.isL1Matched(eleSCEta->at(goodElectrons.at(j2)), eleSCPhi->at(goodElectrons.at(j2)), eTrig, 15.0);
           if(! (isFirstElectronL1Matched || isSecondElectronL1Matched)) continue;
 
-          //HLT trigger matching
-          bool isFirstElectronHLTMatched = matcher.isHLTMatched(eleSCEta->at(goodElectrons.at(j)), eleSCPhi->at(goodElectrons.at(j)), eTrig);
-          bool isSecondElectronHLTMatched = matcher.isHLTMatched(eleSCEta->at(goodElectrons.at(j2)), eleSCPhi->at(goodElectrons.at(j2)), eTrig);
+          //HLT trigger matching (2 HLT matches > 10 GeV)
+          bool isFirstElectronHLTMatched = matcher.isHLTMatched(eleSCEta->at(goodElectrons.at(j)), eleSCPhi->at(goodElectrons.at(j)), eTrig, 10.0);
+          bool isSecondElectronHLTMatched = matcher.isHLTMatched(eleSCEta->at(goodElectrons.at(j2)), eleSCPhi->at(goodElectrons.at(j2)), eTrig, 10.0);
           if(! (isFirstElectronHLTMatched && isSecondElectronHLTMatched)) continue;
    
           bool isOppositeSign =  eleCharge->at(goodElectrons.at(j)) != eleCharge->at(goodElectrons.at(j2));

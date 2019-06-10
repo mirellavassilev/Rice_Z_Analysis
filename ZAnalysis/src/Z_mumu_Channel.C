@@ -45,7 +45,6 @@ void doZ2mumu(std::vector< std::string > files){
   TH1D * v2MuSqrtDenomVsCent;
   TH1D * v2MuVsCent;
 
-  TH1D * acoplanarity[nBins];
 
   for(int i = 0; i<nBins; i++){
     massPeakOS[i] = new TH1D(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{+}#mu^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
@@ -57,7 +56,6 @@ void doZ2mumu(std::vector< std::string > files){
     v2MuNum[i] = new TProfile(Form("v2MuNum_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2MuDenom[i] = new TProfile(Form("v2MuDenom_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     
-    acoplanarity[i] = new TH1D(Form("acoplanarity_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",30,0,0.1);
   }  
   v2NumVsCent = new TProfile("v2NumVsCent","",nBins,0,nBins);
   v2DenomVsCent = new TProfile("v2DenomVsCent","",nBins,0,nBins);
@@ -104,7 +102,6 @@ void doZ2mumu(std::vector< std::string > files){
           for(int k = 0; k<nBins; k++){
             if(c.isInsideBin(v.centrality(),k)){
               massPeakOS[k]->Fill( v.mass()[j] );
-              acoplanarity[k]->Fill(1 - TMath::Abs( TMath::ACos( TMath::Cos( v.PhiD1()[j]- v.PhiD2()[j] ) ) )/ TMath::Pi());
             }
           }
         }else{
@@ -171,11 +168,6 @@ void doZ2mumu(std::vector< std::string > files){
 
     v2MuSqrtDenomVsCent->SetBinContent(k,TMath::Sqrt(v2MuDenomVsCent->GetBinContent(k)));
     v2MuSqrtDenomVsCent->SetBinError(k,v2MuDenomVsCent->GetBinError(k)/(2*TMath::Sqrt(v2MuDenomVsCent->GetBinContent(k))));
-
-    int entries = acoplanarity[k-1]->GetEntries();
-    if(entries!=0){
-      acoplanarity[k-1]->Scale(1.0/(float)entries);
-    }
   }
 
   v2VsCent = (TH1D*)v2NumVsCentHist->Clone("v2VsCent");
@@ -191,7 +183,6 @@ void doZ2mumu(std::vector< std::string > files){
     v2Denom[i]->SetDirectory(0);
     v2MuNum[i]->SetDirectory(0);
     v2MuDenom[i]->SetDirectory(0);
-    acoplanarity[i]->SetDirectory(0);
   }
 
   v2DenomVsCent->SetDirectory(0);
@@ -214,7 +205,6 @@ void doZ2mumu(std::vector< std::string > files){
     v2Denom[i]->Write();
     v2MuNum[i]->Write();
     v2MuDenom[i]->Write();
-    acoplanarity[i]->Write();
   }
   v2NumVsCent->Write();
   v2DenomVsCent->Write();
