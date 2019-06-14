@@ -2,7 +2,7 @@
 
 inDir=$1
 
-for i in $(seq 0 11);
+for i in $(seq 0 14);
 do
-    ./bin/Z_EE_Channel.exe Z_ee_fileList_v3_June14.txt $i 12 > unmergedOutputs/job_$i.log 2>&1 & 
+    ./bin/Z_EE_Channel.exe Z_ee_fileList_v3_June14.txt $i 15 > unmergedOutputs/job_$i.log 2>&1 & 
 done

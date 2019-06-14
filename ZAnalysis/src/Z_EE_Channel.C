@@ -44,6 +44,7 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   TProfile * v2EleDenom[nBins];
   TProfile * v2EleDenomVsCent;
 
+  /*
   TH1D * v2NumVsCentHist;
   TH1D * v2SqrtDenomVsCent;
   TH1D * v2VsCent;
@@ -51,7 +52,8 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   TH1D * v2EleNumVsCentHist;
   TH1D * v2EleSqrtDenomVsCent;
   TH1D * v2EleVsCent;
-  
+  */  
+
   for(int i = 0; i<nBins; i++){
     massPeakOS[i] = new TH1D(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{+}e^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
     massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{#pm}e^{#pm}}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
@@ -63,13 +65,13 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   }  
   v2NumVsCent = new TProfile("v2NumVsCent","",nBins,0,nBins);
   v2DenomVsCent = new TProfile("v2DenomVsCent","",nBins,0,nBins);
-  v2SqrtDenomVsCent = new TH1D("v2SqrtDenomVsCent","",nBins,0,nBins);
-  v2NumVsCentHist = new TH1D("v2NumVsCentHist","",nBins,0,nBins);
+  //v2SqrtDenomVsCent = new TH1D("v2SqrtDenomVsCent","",nBins,0,nBins);
+  //v2NumVsCentHist = new TH1D("v2NumVsCentHist","",nBins,0,nBins);
   
   v2EleNumVsCent = new TProfile("v2EleNumVsCent","",nBins,0,nBins);
   v2EleDenomVsCent = new TProfile("v2EleDenomVsCent","",nBins,0,nBins);
-  v2EleSqrtDenomVsCent = new TH1D("v2EleSqrtDenomVsCent","",nBins,0,nBins);
-  v2EleNumVsCentHist = new TH1D("v2EleNumVsCentHist","",nBins,0,nBins);
+  //v2EleSqrtDenomVsCent = new TH1D("v2EleSqrtDenomVsCent","",nBins,0,nBins);
+  //v2EleNumVsCentHist = new TH1D("v2EleNumVsCentHist","",nBins,0,nBins);
 
   int nEle;
   int hiBin;
@@ -306,7 +308,7 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   }
 
   timer.StartSplit("End of analysis");
-  
+  /*
   for(int k = 1; k<nBins+1; k++){
     v2NumVsCentHist->SetBinContent(k,v2NumVsCent->GetBinContent(k));
     v2NumVsCentHist->SetBinError(k,v2NumVsCent->GetBinError(k));
@@ -327,50 +329,51 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   //electrons  
   v2EleVsCent = (TH1D*)v2EleNumVsCentHist->Clone("v2EleVsCent");
   v2EleVsCent->Divide(v2EleSqrtDenomVsCent);
-
+  */
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->SetDirectory(0);
     massPeakSS[i]->SetDirectory(0);
-   // v2Num[i]->SetDirectory(0);
-   // v2Denom[i]->SetDirectory(0);
-   // v2EleNum[i]->SetDirectory(0);
-   // v2EleDenom[i]->SetDirectory(0);
+    v2Num[i]->SetDirectory(0);
+    v2Denom[i]->SetDirectory(0);
+    v2EleNum[i]->SetDirectory(0);
+    v2EleDenom[i]->SetDirectory(0);
   }
 
-  /*
-  v2DenomVsCent->SetDirectory(0);
-  v2SqrtDenomVsCent->SetDirectory(0);
-  v2NumVsCentHist->SetDirectory(0);
-  v2NumVsCent->SetDirectory(0);
-  v2VsCent->SetDirectory(0);
   
-  v2EleDenomVsCent->SetDirectory(0);
-  v2EleSqrtDenomVsCent->SetDirectory(0);
-  v2EleNumVsCentHist->SetDirectory(0);
-  v2EleNumVsCent->SetDirectory(0);
-  v2EleVsCent->SetDirectory(0);
-  */  
+  v2NumVsCent->SetDirectory(0);
+  v2DenomVsCent->SetDirectory(0);
+  //v2SqrtDenomVsCent->SetDirectory(0);
+  //v2NumVsCentHist->SetDirectory(0);
+  //v2VsCent->SetDirectory(0);
+  
 
-  TFile * output = new TFile(Form("unmergedOutput/Z2ee_%d.root",jobNumber),"recreate");
+  v2EleNumVsCent->SetDirectory(0);
+  v2EleDenomVsCent->SetDirectory(0);
+  //v2EleSqrtDenomVsCent->SetDirectory(0);
+  //v2EleNumVsCentHist->SetDirectory(0);
+  //v2EleVsCent->SetDirectory(0);
+    
+
+  TFile * output = new TFile(Form("unmergedOutputs/Z2ee_%d.root",jobNumber),"recreate");
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->Write();
     massPeakSS[i]->Write();
-    //v2Num[i]->Write();
-    //v2Denom[i]->Write();
-    //v2EleNum[i]->Write();
-    //v2EleDenom[i]->Write();
+    v2Num[i]->Write();
+    v2Denom[i]->Write();
+    v2EleNum[i]->Write();
+    v2EleDenom[i]->Write();
   }
-  /*v2NumVsCent->Write();
+  v2NumVsCent->Write();
   v2DenomVsCent->Write();
-  v2SqrtDenomVsCent->Write();
-  v2NumVsCentHist->Write();
-  v2VsCent->Write();
+  //v2SqrtDenomVsCent->Write();
+  //v2NumVsCentHist->Write();
+  //v2VsCent->Write();
   v2EleNumVsCent->Write();
   v2EleDenomVsCent->Write();
-  v2EleSqrtDenomVsCent->Write();
-  v2EleNumVsCentHist->Write();
-  v2EleVsCent->Write();
-  */  
+  //v2EleSqrtDenomVsCent->Write();
+  //v2EleNumVsCentHist->Write();
+  //v2EleVsCent->Write();
+    
 
   output->Close();
 
