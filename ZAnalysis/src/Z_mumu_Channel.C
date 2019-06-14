@@ -90,7 +90,7 @@ void doZ2mumu(std::vector< std::string > files){
         if( !(v.pTD1()[j] > 20 )) continue;
         if( !(v.pTD2()[j] > 20 )) continue;
         if( !(v.tightCand(j,"POG"))) continue;//tight Muon 1 && tight Muon 2      
-        if( !(v.VtxProb()[j] >0.001)) continue; 
+        //if( !(v.VtxProb()[j] >0.001)) continue; 
  
         //make sure that one of the daughters was the trigger muon
         bool isDaughter1Trigger = v.trigMuon1()[PbPb::R5TeV::Y2018::HLT_HIL3Mu12][j];
