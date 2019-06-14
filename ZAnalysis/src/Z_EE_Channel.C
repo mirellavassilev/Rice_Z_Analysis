@@ -2,6 +2,7 @@
 #include "include/electronTriggerMatching.h"
 #include "include/centralityTool.h"
 #include "include/Settings.h"
+#include "include/Timer.h"
 #include "TLorentzVector.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -14,7 +15,11 @@
 #include <fstream>
 #include <string>
 
-void doZ2EE(std::vector< std::string > files){
+void doZ2EE(std::vector< std::string > files, int jobNumber){
+  Timer timer = Timer();
+  timer.Start();
+  timer.StartSplit("Start Up");
+
   //switch between single electron 20 and double electron 10
   bool doSingleEle20 = true;
 
@@ -97,8 +102,10 @@ void doZ2EE(std::vector< std::string > files){
   float hiQVecAngle[200];
 
   for(unsigned int f = 0; f<files.size(); f++){
+    timer.StartSplit("Opening Files");
+
     TFile * in = TFile::Open(files.at(f).c_str(),"read");
-    if(f%10 == 0)  std::cout << f << std::endl;
+    if(f%5 == 0)  std::cout << f << "/" << files.size() << std::endl;
 
     TTree * hltTree = (TTree*)in->Get("hltanalysis/HltTree");
     hltTree->SetBranchAddress("HLT_HIDoubleEle10GsfMass50_v1",&HLT_DoubleEle10); 
@@ -149,27 +156,41 @@ void doZ2EE(std::vector< std::string > files){
     HLTObjTree->SetBranchAddress("phi",&(eTrig.HLTPhi));
     HLTObjTree->SetBranchAddress("pt",&(eTrig.HLTPt));
 
+    bool areAllEleBranchesOn = true;
     for(unsigned int i = 0; i < eTree->GetEntries(); i++){
-      hltTree->GetEntry(i);
-
+      timer.StartSplit("Checking Number of electrons");
+      //check if the event has at least 2 electrons
+      //some clever branch status changing is done here to avoid loading too much stuff for the simple check
+      if(areAllEleBranchesOn){
+        eTree->SetBranchStatus("*",0);
+        eTree->SetBranchStatus("nEle",1);
+        areAllEleBranchesOn = false;
+      }
+      eTree->GetEntry(i);
+      if(nEle<2) continue;
+      
+      timer.StartSplit("Checking HLT Selections");
       //check for the trigger we want (double ele 10 or single ele 20)
+      hltTree->GetEntry(i);
       if((!doSingleEle20) && (!HLT_DoubleEle10)) continue;
       if( doSingleEle20 && (!HLT_SingleEle20)) continue;
 
-      eTree->GetEntry(i);
-      if(nEle<2) continue;
-
+      timer.StartSplit("Checking Evt Selections");
+      //event selections
+      evtTree->GetEntry(i);
+      if(TMath::Abs(vz)>15) continue;
       skimTree->GetEntry(i);
       if(! (pprimaryVertexFilter && phfCoincFilter2Th4 && pclusterCompatibilityFilter)) continue;
 
-      evtTree->GetEntry(i);
-      if(TMath::Abs(vz)>15) continue;
-
-      L1Tree->GetEntry(i);
-      HLTObjTree->GetEntry(i);
-
-      std::vector< int > goodElectrons;
-   
+      //grab the rest of the important electron information 
+      timer.StartSplit("Loading electron stuff");
+      areAllEleBranchesOn = true;
+      eTree->SetBranchStatus("*",1);
+      eTree->GetEntry(i);
+      
+      timer.StartSplit("Electron Cuts");
+      //make a list of electrons passing our cuts
+      std::vector< int > goodElectrons; 
       for(unsigned int j = 0; j < (unsigned int) nEle; j++){
         if(elePt->at(j)<20) continue;
         if(TMath::Abs(eleSCEta->at(j)) > 2.4) continue;
@@ -187,7 +208,14 @@ void doZ2EE(std::vector< std::string > files){
       if(goodElectrons.size()<2) continue;
       bool moreThan2 = false;
       if(goodElectrons.size()>2) moreThan2 = true;
-     
+
+      timer.StartSplit("Loading HLT/L1 Object stuff");
+      //get trigger matching stuff
+      L1Tree->GetEntry(i);
+      HLTObjTree->GetEntry(i);
+    
+      //make Z candidates 
+      timer.StartSplit("Z candidates");
       TLorentzVector * elec1 = new TLorentzVector();
       TLorentzVector * elec2 = new TLorentzVector();
       for(unsigned int j = 0; j<goodElectrons.size(); j++){
@@ -276,6 +304,8 @@ void doZ2EE(std::vector< std::string > files){
     delete eTree;
     in->Close();
   }
+
+  timer.StartSplit("End of analysis");
   
   for(int k = 1; k<nBins+1; k++){
     v2NumVsCentHist->SetBinContent(k,v2NumVsCent->GetBinContent(k));
@@ -301,12 +331,13 @@ void doZ2EE(std::vector< std::string > files){
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->SetDirectory(0);
     massPeakSS[i]->SetDirectory(0);
-    v2Num[i]->SetDirectory(0);
-    v2Denom[i]->SetDirectory(0);
-    v2EleNum[i]->SetDirectory(0);
-    v2EleDenom[i]->SetDirectory(0);
+   // v2Num[i]->SetDirectory(0);
+   // v2Denom[i]->SetDirectory(0);
+   // v2EleNum[i]->SetDirectory(0);
+   // v2EleDenom[i]->SetDirectory(0);
   }
 
+  /*
   v2DenomVsCent->SetDirectory(0);
   v2SqrtDenomVsCent->SetDirectory(0);
   v2NumVsCentHist->SetDirectory(0);
@@ -318,17 +349,18 @@ void doZ2EE(std::vector< std::string > files){
   v2EleNumVsCentHist->SetDirectory(0);
   v2EleNumVsCent->SetDirectory(0);
   v2EleVsCent->SetDirectory(0);
-  
-  TFile * output = new TFile("Z2ee.root","recreate");
+  */  
+
+  TFile * output = new TFile(Form("unmergedOutput/Z2ee_%d.root",jobNumber),"recreate");
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->Write();
     massPeakSS[i]->Write();
-    v2Num[i]->Write();
-    v2Denom[i]->Write();
-    v2EleNum[i]->Write();
-    v2EleDenom[i]->Write();
+    //v2Num[i]->Write();
+    //v2Denom[i]->Write();
+    //v2EleNum[i]->Write();
+    //v2EleDenom[i]->Write();
   }
-  v2NumVsCent->Write();
+  /*v2NumVsCent->Write();
   v2DenomVsCent->Write();
   v2SqrtDenomVsCent->Write();
   v2NumVsCentHist->Write();
@@ -338,8 +370,12 @@ void doZ2EE(std::vector< std::string > files){
   v2EleSqrtDenomVsCent->Write();
   v2EleNumVsCentHist->Write();
   v2EleVsCent->Write();
-  
+  */  
+
   output->Close();
+
+  timer.Stop();
+  timer.Report();
 
   return;
 }
@@ -347,9 +383,9 @@ void doZ2EE(std::vector< std::string > files){
 
 int main(int argc, const char* argv[])
 {
-  if(argc != 2)
+  if(argc != 4)
   {
-    std::cout << "Usage: Z_EE_Channel <fileList>" << std::endl;
+    std::cout << "Usage: Z_EE_Channel <fileList> <job #> <total number of jobs>" << std::endl;
     return 1;
   }  
 
@@ -357,6 +393,9 @@ int main(int argc, const char* argv[])
   std::string buffer;
   std::vector<std::string> listOfFiles;
   std::ifstream inFile(fList.data());
+
+  int job = std::atoi(argv[2]);
+  int totalJobs = std::atoi(argv[3]);
 
   if(!inFile.is_open())
   {
@@ -370,11 +409,11 @@ int main(int argc, const char* argv[])
     {
       inFile >> buffer;
       if(inFile.eof()) break;
-      listOfFiles.push_back(buffer);
+      if(line%totalJobs==job) listOfFiles.push_back(buffer);
       line++;
     }
   }
    
-  doZ2EE(listOfFiles);
+  doZ2EE(listOfFiles, job);
   return 0; 
 }
