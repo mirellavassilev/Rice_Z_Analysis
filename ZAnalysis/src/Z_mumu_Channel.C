@@ -31,41 +31,46 @@ void doZ2mumu(std::vector< std::string > files){
   TProfile * v2NumVsCent;
   TProfile * v2Denom[nBins];
   TProfile * v2DenomVsCent;
+  TProfile * v2Q1Mid[nBins];
+  TProfile * v2Q1MidVsCent;
+  TProfile * v2Q2Mid[nBins];
+  TProfile * v2Q2MidVsCent;
+  
   
   TProfile * v2MuNum[nBins];
   TProfile * v2MuNumVsCent;
   TProfile * v2MuDenom[nBins];
   TProfile * v2MuDenomVsCent;
-
-  TH1D * v2NumVsCentHist;
-  TH1D * v2SqrtDenomVsCent;
-  TH1D * v2VsCent;
-  
-  TH1D * v2MuNumVsCentHist;
-  TH1D * v2MuSqrtDenomVsCent;
-  TH1D * v2MuVsCent;
+  TProfile * v2MuQ1Mid[nBins];
+  TProfile * v2MuQ1MidVsCent;
+  TProfile * v2MuQ2Mid[nBins];
+  TProfile * v2MuQ2MidVsCent;
 
 
   for(int i = 0; i<nBins; i++){
     massPeakOS[i] = new TH1D(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{+}#mu^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
-    massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{#pm}#mu^{#pm}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
+    massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{#pm}#mu^{#pm}}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
     
     v2Num[i] = new TProfile(Form("v2Num_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2Denom[i] = new TProfile(Form("v2Denom_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
-    
+    v2Q1Mid[i] = new TProfile(Form("v2Q1Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+    v2Q2Mid[i] = new TProfile(Form("v2Q2Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+ 
     v2MuNum[i] = new TProfile(Form("v2MuNum_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2MuDenom[i] = new TProfile(Form("v2MuDenom_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+    v2MuQ1Mid[i] = new TProfile(Form("v2MuQ1Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+    v2MuQ2Mid[i] = new TProfile(Form("v2MuQ2Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     
   }  
   v2NumVsCent = new TProfile("v2NumVsCent","",nBins,0,nBins);
   v2DenomVsCent = new TProfile("v2DenomVsCent","",nBins,0,nBins);
-  v2SqrtDenomVsCent = new TH1D("v2SqrtDenomVsCent","",nBins,0,nBins);
-  v2NumVsCentHist = new TH1D("v2NumVsCentHist","",nBins,0,nBins);
-  
+  v2Q1MidVsCent = new TProfile("v2Q1MidVsCent","",nBins,0,nBins); 
+  v2Q2MidVsCent = new TProfile("v2Q2MidVsCent","",nBins,0,nBins); 
+ 
   v2MuNumVsCent = new TProfile("v2MuNumVsCent","",nBins,0,nBins);
   v2MuDenomVsCent = new TProfile("v2MuDenomVsCent","",nBins,0,nBins);
-  v2MuSqrtDenomVsCent = new TH1D("v2MuSqrtDenomVsCent","",nBins,0,nBins);
-  v2MuNumVsCentHist = new TH1D("v2MuNumVsCentHist","",nBins,0,nBins);
+  v2MuQ1MidVsCent = new TProfile("v2MuQ1MidVsCent","",nBins,0,nBins); 
+  v2MuQ2MidVsCent = new TProfile("v2MuQ2MidVsCent","",nBins,0,nBins); 
 
   //starting looping over the file
   for(unsigned int f = 0; f<files.size(); f++){
@@ -90,7 +95,7 @@ void doZ2mumu(std::vector< std::string > files){
         if( !(v.pTD1()[j] > 20 )) continue;
         if( !(v.pTD2()[j] > 20 )) continue;
         if( !(v.tightCand(j,"POG"))) continue;//tight Muon 1 && tight Muon 2      
-        //if( !(v.VtxProb()[j] >0.001)) continue; 
+        if( !(v.VtxProb()[j] >0.001)) continue; 
  
         //make sure that one of the daughters was the trigger muon
         bool isDaughter1Trigger = v.trigMuon1()[PbPb::R5TeV::Y2018::HLT_HIL3Mu12][j];
@@ -113,6 +118,7 @@ void doZ2mumu(std::vector< std::string > files){
         //v2 calcuation
         TComplex Qp = TComplex(v.ephfpQ()[1], v.ephfpAngle()[1], true);
         TComplex Qn = TComplex(v.ephfmQ()[1], v.ephfmAngle()[1], true);
+        TComplex Qmid = TComplex(v.eptrackmidQ()[1],v.eptrackmidAngle()[1],true);
 
         TComplex candQ = TComplex(1, 2*v.phi()[j], true);
         TComplex mu1Q = TComplex(1, 2*v.PhiD1()[j], true);
@@ -120,34 +126,66 @@ void doZ2mumu(std::vector< std::string > files){
         if( isOppositeSign){
           for(int k = 0; k<nBins; k++){
             if(c.isInsideBin(v.centrality(),k)){
-              TComplex Q = Qp;
-              if(v.eta()[j]>0) Q = Qn;
+              TComplex Q1 = Qp;
+              TComplex Q2 = Qn;
+              if(v.eta()[j]>0){
+                Q1 = Qn;
+                Q2 = Qp;
+              }
 
-              float denom = Q.Rho2();
-              float num = (candQ*TComplex::Conjugate(Q)).Re();
+              float num = (candQ*TComplex::Conjugate(Q1)).Re();
+              float denom = (Q1*TComplex::Conjugate(Q2)).Re();
+              float q1AndMid = (Q1*TComplex::Conjugate(Qmid)).Re();
+              float q2AndMid = (Q2*TComplex::Conjugate(Qmid)).Re();
               v2Num[k]->Fill(0.5,num);
               v2Denom[k]->Fill(0.5,denom);
+              v2Q1Mid[k]->Fill(0.5,q1AndMid);
+              v2Q2Mid[k]->Fill(0.5,q2AndMid);
 
               v2NumVsCent->Fill(k,num);
               v2DenomVsCent->Fill(k,denom);
+              v2Q1MidVsCent->Fill(k,q1AndMid);
+              v2Q2MidVsCent->Fill(k,q2AndMid);
 
               //muons
-              TComplex Q1 = Qp;
-              if(v.EtaD1()[j]>0) Q1 = Qn; 
+              Q1 = Qp;
+              Q2 = Qn;
+              if(v.EtaD1()[j]>0){
+                Q1 = Qn; 
+                Q2 = Qp;
+              }
               float numMu1 = (mu1Q*TComplex::Conjugate(Q1)).Re();
+              float denomMu1 = (Q1*TComplex::Conjugate(Q2)).Re();
+              float q1AndMidMu1 = (Q1*TComplex::Conjugate(Qmid)).Re();
+              float q2AndMidMu1 = (Q2*TComplex::Conjugate(Qmid)).Re();
               v2MuNum[k]->Fill(0.5,numMu1);
-              v2MuDenom[k]->Fill(0.5,Q1.Rho2());
+              v2MuDenom[k]->Fill(0.5,denomMu1);
+              v2MuQ1Mid[k]->Fill(0.5,q1AndMidMu1);
+              v2MuQ2Mid[k]->Fill(0.5,q2AndMidMu1);
               
-              TComplex Q2 = Qp;
-              if(v.EtaD2()[j]>0) Q2 = Qn;
-              float numMu2 = (mu2Q*TComplex::Conjugate(Q2)).Re();
+              Q1 = Qp;
+              Q2 = Qn;
+              if(v.EtaD2()[j]>0){
+                Q1 = Qn; 
+                Q2 = Qp;
+              }
+              float numMu2 = (mu2Q*TComplex::Conjugate(Q1)).Re();
+              float denomMu2 = (Q1*TComplex::Conjugate(Q2)).Re();
+              float q1AndMidMu2 = (Q1*TComplex::Conjugate(Qmid)).Re();
+              float q2AndMidMu2 = (Q2*TComplex::Conjugate(Qmid)).Re();
               v2MuNum[k]->Fill(0.5,numMu2);
-              v2MuDenom[k]->Fill(0.5,Q2.Rho2());
+              v2MuDenom[k]->Fill(0.5,denomMu2);
+              v2MuQ1Mid[k]->Fill(0.5,q1AndMidMu2);
+              v2MuQ2Mid[k]->Fill(0.5,q2AndMidMu2);
 
               v2MuNumVsCent->Fill(k,numMu1);
               v2MuNumVsCent->Fill(k,numMu2);
-              v2MuDenomVsCent->Fill(k,Q1.Rho2());
-              v2MuDenomVsCent->Fill(k,Q2.Rho2());
+              v2MuDenomVsCent->Fill(k,denomMu1);
+              v2MuDenomVsCent->Fill(k,denomMu2);
+              v2MuQ1MidVsCent->Fill(k,q1AndMidMu1);
+              v2MuQ1MidVsCent->Fill(k,q1AndMidMu2);
+              v2MuQ2MidVsCent->Fill(k,q2AndMidMu1);
+              v2MuQ2MidVsCent->Fill(k,q2AndMidMu2);
             }
           }
         }
@@ -155,47 +193,29 @@ void doZ2mumu(std::vector< std::string > files){
     }
   }
 
-  for(int k = 1; k<nBins+1; k++){
-    v2NumVsCentHist->SetBinContent(k,v2NumVsCent->GetBinContent(k));
-    v2NumVsCentHist->SetBinError(k,v2NumVsCent->GetBinError(k));
-
-    v2SqrtDenomVsCent->SetBinContent(k,TMath::Sqrt(v2DenomVsCent->GetBinContent(k)));
-    v2SqrtDenomVsCent->SetBinError(k,v2DenomVsCent->GetBinError(k)/(2*TMath::Sqrt(v2DenomVsCent->GetBinContent(k))));
-    
-    //muons
-    v2MuNumVsCentHist->SetBinContent(k,v2MuNumVsCent->GetBinContent(k));
-    v2MuNumVsCentHist->SetBinError(k,v2MuNumVsCent->GetBinError(k));
-
-    v2MuSqrtDenomVsCent->SetBinContent(k,TMath::Sqrt(v2MuDenomVsCent->GetBinContent(k)));
-    v2MuSqrtDenomVsCent->SetBinError(k,v2MuDenomVsCent->GetBinError(k)/(2*TMath::Sqrt(v2MuDenomVsCent->GetBinContent(k))));
-  }
-
-  v2VsCent = (TH1D*)v2NumVsCentHist->Clone("v2VsCent");
-  v2VsCent->Divide(v2SqrtDenomVsCent);
-  //muons  
-  v2MuVsCent = (TH1D*)v2MuNumVsCentHist->Clone("v2MuVsCent");
-  v2MuVsCent->Divide(v2MuSqrtDenomVsCent);
 
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->SetDirectory(0);
     massPeakSS[i]->SetDirectory(0);
     v2Num[i]->SetDirectory(0);
     v2Denom[i]->SetDirectory(0);
+    v2Q1Mid[i]->SetDirectory(0);
+    v2Q2Mid[i]->SetDirectory(0);
     v2MuNum[i]->SetDirectory(0);
     v2MuDenom[i]->SetDirectory(0);
+    v2MuQ1Mid[i]->SetDirectory(0);
+    v2MuQ2Mid[i]->SetDirectory(0);
   }
 
   v2DenomVsCent->SetDirectory(0);
-  v2SqrtDenomVsCent->SetDirectory(0);
-  v2NumVsCentHist->SetDirectory(0);
   v2NumVsCent->SetDirectory(0);
-  v2VsCent->SetDirectory(0);
+  v2Q1MidVsCent->SetDirectory(0);
+  v2Q2MidVsCent->SetDirectory(0);
   
   v2MuDenomVsCent->SetDirectory(0);
-  v2MuSqrtDenomVsCent->SetDirectory(0);
-  v2MuNumVsCentHist->SetDirectory(0);
   v2MuNumVsCent->SetDirectory(0);
-  v2MuVsCent->SetDirectory(0);
+  v2MuQ1MidVsCent->SetDirectory(0);
+  v2MuQ2MidVsCent->SetDirectory(0);
 
   TFile * output = new TFile("Z2mumu.root","recreate");
   for(int i = 0; i<nBins; i++){
@@ -203,19 +223,21 @@ void doZ2mumu(std::vector< std::string > files){
     massPeakSS[i]->Write();
     v2Num[i]->Write();
     v2Denom[i]->Write();
+    v2Q1Mid[i]->Write();
+    v2Q2Mid[i]->Write();
     v2MuNum[i]->Write();
     v2MuDenom[i]->Write();
+    v2MuQ1Mid[i]->Write();
+    v2MuQ2Mid[i]->Write();
   }
   v2NumVsCent->Write();
   v2DenomVsCent->Write();
-  v2SqrtDenomVsCent->Write();
-  v2NumVsCentHist->Write();
-  v2VsCent->Write();
+  v2Q1MidVsCent->Write();
+  v2Q2MidVsCent->Write();
   v2MuNumVsCent->Write();
   v2MuDenomVsCent->Write();
-  v2MuSqrtDenomVsCent->Write();
-  v2MuNumVsCentHist->Write();
-  v2MuVsCent->Write();
+  v2MuQ1MidVsCent->Write();
+  v2MuQ2MidVsCent->Write();
 
   output->Close();
 

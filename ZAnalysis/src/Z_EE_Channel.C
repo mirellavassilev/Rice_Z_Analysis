@@ -38,40 +38,42 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   TProfile * v2NumVsCent;
   TProfile * v2Denom[nBins];
   TProfile * v2DenomVsCent;
+  TProfile * v2Q1Mid[nBins];
+  TProfile * v2Q1MidVsCent;
+  TProfile * v2Q2Mid[nBins];
+  TProfile * v2Q2MidVsCent;
   
   TProfile * v2EleNum[nBins];
   TProfile * v2EleNumVsCent;
   TProfile * v2EleDenom[nBins];
   TProfile * v2EleDenomVsCent;
-
-  /*
-  TH1D * v2NumVsCentHist;
-  TH1D * v2SqrtDenomVsCent;
-  TH1D * v2VsCent;
-  
-  TH1D * v2EleNumVsCentHist;
-  TH1D * v2EleSqrtDenomVsCent;
-  TH1D * v2EleVsCent;
-  */  
+  TProfile * v2EleQ1Mid[nBins];
+  TProfile * v2EleQ1MidVsCent;
+  TProfile * v2EleQ2Mid[nBins];
+  TProfile * v2EleQ2MidVsCent;
 
   for(int i = 0; i<nBins; i++){
     massPeakOS[i] = new TH1D(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{+}e^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
     massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{#pm}e^{#pm}}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
     v2Num[i] = new TProfile(Form("v2Num_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2Denom[i] = new TProfile(Form("v2Denom_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+    v2Q1Mid[i] = new TProfile(Form("v2Q1Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+    v2Q2Mid[i] = new TProfile(Form("v2Q2Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     
     v2EleNum[i] = new TProfile(Form("v2EleNum_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2EleDenom[i] = new TProfile(Form("v2EleDenom_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+    v2EleQ1Mid[i] = new TProfile(Form("v2EleQ1Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
+    v2EleQ2Mid[i] = new TProfile(Form("v2EleQ2Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
   }  
   v2NumVsCent = new TProfile("v2NumVsCent","",nBins,0,nBins);
   v2DenomVsCent = new TProfile("v2DenomVsCent","",nBins,0,nBins);
-  //v2SqrtDenomVsCent = new TH1D("v2SqrtDenomVsCent","",nBins,0,nBins);
-  //v2NumVsCentHist = new TH1D("v2NumVsCentHist","",nBins,0,nBins);
+  v2Q1MidVsCent = new TProfile("v2Q1MidVsCent","",nBins,0,nBins);
+  v2Q2MidVsCent = new TProfile("v2Q2MidVsCent","",nBins,0,nBins);
   
   v2EleNumVsCent = new TProfile("v2EleNumVsCent","",nBins,0,nBins);
   v2EleDenomVsCent = new TProfile("v2EleDenomVsCent","",nBins,0,nBins);
-  //v2EleSqrtDenomVsCent = new TH1D("v2EleSqrtDenomVsCent","",nBins,0,nBins);
-  //v2EleNumVsCentHist = new TH1D("v2EleNumVsCentHist","",nBins,0,nBins);
+  v2EleQ1MidVsCent = new TProfile("v2Q1MidVsCent","",nBins,0,nBins);
+  v2EleQ2MidVsCent = new TProfile("v2Q2MidVsCent","",nBins,0,nBins);
 
   int nEle;
   int hiBin;
@@ -258,42 +260,80 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
 
           //v2 calcuation
           if( isOppositeSign){
+            //reference Q vectors
             TComplex Qp = TComplex(hiQVecMag[7], hiQVecAngle[7], true);
             TComplex Qn = TComplex(hiQVecMag[6], hiQVecAngle[6], true);
+            TComplex Qmid = TComplex(hiQVecMag[9], hiQVecAngle[9], true);
 
+            //signal Q vectors
             TComplex candQ = TComplex(1, 2*Zcand.Phi(), true);
             TComplex ele1Q = TComplex(1, 2*elePhi->at(goodElectrons.at(j)), true);
             TComplex ele2Q = TComplex(1, 2*elePhi->at(goodElectrons.at(j2)), true);
+
             for(int k = 0; k<nBins; k++){
               if(c.isInsideBin(hiBin,k)){
-                TComplex Q = Qp;
-                if(Zcand.Eta()>0) Q = Qn;
+                //see equation 1 in HIN-16-007
+                //'a' is Q1 and 'b' is Q2, c is Qmid
+                TComplex Q1 = Qp;
+                TComplex Q2 = Qn;
+                if(Zcand.Eta()>0){
+                  Q1 = Qn;
+                  Q2 = Qp;
+                }
 
-                float denom = Q.Rho2();
-                float num = (candQ*TComplex::Conjugate(Q)).Re();
+                float num = (candQ*TComplex::Conjugate(Q1)).Re();
+                float denom = (Q1*TComplex::Conjugate(Q2)).Re();
+                float q1AndMid = (Q1*TComplex::Conjugate(Qmid)).Re();
+                float q2AndMid = (Q2*TComplex::Conjugate(Qmid)).Re();
                 v2Num[k]->Fill(0.5,num);
                 v2Denom[k]->Fill(0.5,denom);
+                v2Q1Mid[k]->Fill(0.5,q1AndMid);
+                v2Q2Mid[k]->Fill(0.5,q2AndMid);
 
                 v2NumVsCent->Fill(k,num);
                 v2DenomVsCent->Fill(k,denom);
+                v2Q1MidVsCent->Fill(k,q1AndMid);
+                v2Q2MidVsCent->Fill(k,q2AndMid);
 
                 //electrons
-                TComplex Q1 = Qp;
-                if(eleEta->at(goodElectrons.at(j))>0) Q1 = Qn; 
+                Q1 = Qp;
+                Q2 = Qn;
+                if(eleEta->at(goodElectrons.at(j))>0){
+                  Q1 = Qn; 
+                  Q2 = Qp;
+                }
                 float numEle1 = (ele1Q*TComplex::Conjugate(Q1)).Re();
+                float denomEle1 = (Q1*TComplex::Conjugate(Q2)).Re();
+                float q1AndMidEle1 = (Q1*TComplex::Conjugate(Qmid)).Re();
+                float q2AndMidEle1 = (Q2*TComplex::Conjugate(Qmid)).Re();
                 v2EleNum[k]->Fill(0.5,numEle1);
-                v2EleDenom[k]->Fill(0.5,Q1.Rho2());
+                v2EleDenom[k]->Fill(0.5,denomEle1);
+                v2EleQ1Mid[k]->Fill(0.5,q1AndMidEle1);
+                v2EleQ2Mid[k]->Fill(0.5,q2AndMidEle1);
               
-                TComplex Q2 = Qp;
-                if(eleEta->at(goodElectrons.at(j2))>0) Q2 = Qn;
-                float numEle2 = (ele2Q*TComplex::Conjugate(Q2)).Re();
+                Q1 = Qp;
+                Q2 = Qn;
+                if(eleEta->at(goodElectrons.at(j2))>0){
+                  Q1 = Qn; 
+                  Q2 = Qp;
+                }
+                float numEle2 = (ele2Q*TComplex::Conjugate(Q1)).Re();
+                float denomEle2 = (Q1*TComplex::Conjugate(Q2)).Re();
+                float q1AndMidEle2 = (Q1*TComplex::Conjugate(Qmid)).Re();
+                float q2AndMidEle2 = (Q2*TComplex::Conjugate(Qmid)).Re();
                 v2EleNum[k]->Fill(0.5,numEle2);
-                v2EleDenom[k]->Fill(0.5,Q2.Rho2());
+                v2EleDenom[k]->Fill(0.5,denomEle2);
+                v2EleQ1Mid[k]->Fill(0.5,q1AndMidEle2);
+                v2EleQ2Mid[k]->Fill(0.5,q2AndMidEle2);
 
                 v2EleNumVsCent->Fill(k,numEle1);
                 v2EleNumVsCent->Fill(k,numEle2);
-                v2EleDenomVsCent->Fill(k,Q1.Rho2());
-                v2EleDenomVsCent->Fill(k,Q2.Rho2());
+                v2EleDenomVsCent->Fill(k,denomEle1);
+                v2EleDenomVsCent->Fill(k,denomEle2);
+                v2EleQ1MidVsCent->Fill(k,q1AndMidEle1);
+                v2EleQ1MidVsCent->Fill(k,q1AndMidEle2);
+                v2EleQ2MidVsCent->Fill(k,q2AndMidEle1);
+                v2EleQ2MidVsCent->Fill(k,q2AndMidEle2);
               }
             }
           }
@@ -308,51 +348,29 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   }
 
   timer.StartSplit("End of analysis");
-  /*
-  for(int k = 1; k<nBins+1; k++){
-    v2NumVsCentHist->SetBinContent(k,v2NumVsCent->GetBinContent(k));
-    v2NumVsCentHist->SetBinError(k,v2NumVsCent->GetBinError(k));
-
-    v2SqrtDenomVsCent->SetBinContent(k,TMath::Sqrt(v2DenomVsCent->GetBinContent(k)));
-    v2SqrtDenomVsCent->SetBinError(k,v2DenomVsCent->GetBinError(k)/(2*TMath::Sqrt(v2DenomVsCent->GetBinContent(k))));
-    
-    //electrons
-    v2EleNumVsCentHist->SetBinContent(k,v2EleNumVsCent->GetBinContent(k));
-    v2EleNumVsCentHist->SetBinError(k,v2EleNumVsCent->GetBinError(k));
-
-    v2EleSqrtDenomVsCent->SetBinContent(k,TMath::Sqrt(v2EleDenomVsCent->GetBinContent(k)));
-    v2EleSqrtDenomVsCent->SetBinError(k,v2EleDenomVsCent->GetBinError(k)/(2*TMath::Sqrt(v2EleDenomVsCent->GetBinContent(k))));
-  }
-
-  v2VsCent = (TH1D*)v2NumVsCentHist->Clone("v2VsCent");
-  v2VsCent->Divide(v2SqrtDenomVsCent);
-  //electrons  
-  v2EleVsCent = (TH1D*)v2EleNumVsCentHist->Clone("v2EleVsCent");
-  v2EleVsCent->Divide(v2EleSqrtDenomVsCent);
-  */
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->SetDirectory(0);
     massPeakSS[i]->SetDirectory(0);
     v2Num[i]->SetDirectory(0);
     v2Denom[i]->SetDirectory(0);
+    v2Q1Mid[i]->SetDirectory(0);
+    v2Q2Mid[i]->SetDirectory(0);
     v2EleNum[i]->SetDirectory(0);
     v2EleDenom[i]->SetDirectory(0);
+    v2EleQ1Mid[i]->SetDirectory(0);
+    v2EleQ2Mid[i]->SetDirectory(0);
   }
 
   
   v2NumVsCent->SetDirectory(0);
   v2DenomVsCent->SetDirectory(0);
-  //v2SqrtDenomVsCent->SetDirectory(0);
-  //v2NumVsCentHist->SetDirectory(0);
-  //v2VsCent->SetDirectory(0);
-  
+  v2Q1MidVsCent->SetDirectory(0);
+  v2Q2MidVsCent->SetDirectory(0);
 
   v2EleNumVsCent->SetDirectory(0);
   v2EleDenomVsCent->SetDirectory(0);
-  //v2EleSqrtDenomVsCent->SetDirectory(0);
-  //v2EleNumVsCentHist->SetDirectory(0);
-  //v2EleVsCent->SetDirectory(0);
-    
+  v2EleQ1MidVsCent->SetDirectory(0);
+  v2EleQ2MidVsCent->SetDirectory(0);
 
   TFile * output = new TFile(Form("unmergedOutputs/Z2ee_%d.root",jobNumber),"recreate");
   for(int i = 0; i<nBins; i++){
@@ -360,21 +378,22 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
     massPeakSS[i]->Write();
     v2Num[i]->Write();
     v2Denom[i]->Write();
+    v2Q1Mid[i]->Write();
+    v2Q2Mid[i]->Write();
     v2EleNum[i]->Write();
     v2EleDenom[i]->Write();
+    v2EleQ1Mid[i]->Write();
+    v2EleQ2Mid[i]->Write();
   }
   v2NumVsCent->Write();
   v2DenomVsCent->Write();
-  //v2SqrtDenomVsCent->Write();
-  //v2NumVsCentHist->Write();
-  //v2VsCent->Write();
+  v2Q1MidVsCent->Write();
+  v2Q2MidVsCent->Write();
   v2EleNumVsCent->Write();
   v2EleDenomVsCent->Write();
-  //v2EleSqrtDenomVsCent->Write();
-  //v2EleNumVsCentHist->Write();
-  //v2EleVsCent->Write();
+  v2EleQ1MidVsCent->Write();
+  v2EleQ2MidVsCent->Write();
     
-
   output->Close();
 
   timer.Stop();

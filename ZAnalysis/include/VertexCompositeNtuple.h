@@ -64,6 +64,9 @@ public :
   Float_t   ephfmSumW()                   { SetBranch("ephfmSumW");                   return ephfmSumW_;                  }
   Float_t*  ephfmAngle()                  { SetBranch("ephfmAngle");                  return ephfmAngle_;                 }
   Float_t*  ephfmQ()                      { SetBranch("ephfmQ");                      return ephfmQ_;                     }
+  Float_t   eptrackmidSumW()                   { SetBranch("eptrackmidSumW");                   return eptrackmidSumW_;                  }
+  Float_t*  eptrackmidAngle()                  { SetBranch("eptrackmidAngle");                  return eptrackmidAngle_;                 }
+  Float_t*  eptrackmidQ()                      { SetBranch("eptrackmidQ");                      return eptrackmidQ_;                     }
 
   // CANDIDATE INFO GETTERS
   UInt_t    candSize()                    { SetBranch("candSize");                    return candSize_;                   }
@@ -249,6 +252,9 @@ public :
   Float_t           ephfmSumW_=-99.;
   Float_t           ephfmAngle_[NEP]={0};
   Float_t           ephfmQ_[NEP]={0};
+  Float_t           eptrackmidSumW_=-99.;
+  Float_t           eptrackmidAngle_[NEP]={0};
+  Float_t           eptrackmidQ_[NEP]={0};
 
   // CANDIDATE INFO VARIABLES
   UInt_t            candSize_=0;
@@ -400,6 +406,9 @@ public :
   TBranch          *b_ephfmAngle;   //!
   TBranch          *b_ephfmQ;   //!
   TBranch          *b_ephfmSumW;   //!
+  TBranch          *b_eptrackmidAngle;   //!
+  TBranch          *b_eptrackmidQ;   //!
+  TBranch          *b_eptrackmidSumW;   //!
 
   // CANDIDATE INFO BRANCHES
   TBranch          *b_candSize;   //!
@@ -670,6 +679,9 @@ void VertexCompositeNtuple::InitTree(void)
     if (fChain->GetBranch("ephfmSumW"))                   fChain->SetBranchAddress("ephfmSumW",                 &ephfmSumW_,                  &b_ephfmSumW                 );
     if (fChain->GetBranch("ephfmAngle"))                  fChain->SetBranchAddress("ephfmAngle",                 ephfmAngle_,                 &b_ephfmAngle                );
     if (fChain->GetBranch("ephfmQ"))                      fChain->SetBranchAddress("ephfmQ",                     ephfmQ_,                     &b_ephfmQ                    );
+    if (fChain->GetBranch("eptrackmidSumW"))                   fChain->SetBranchAddress("eptrackmidSumW",                 &eptrackmidSumW_,                  &b_eptrackmidSumW                 );
+    if (fChain->GetBranch("eptrackmidAngle"))                  fChain->SetBranchAddress("eptrackmidAngle",                 eptrackmidAngle_,                 &b_eptrackmidAngle                );
+    if (fChain->GetBranch("eptrackmidQ"))                      fChain->SetBranchAddress("eptrackmidQ",                     eptrackmidQ_,                     &b_eptrackmidQ                    );
 
     // SET CANDIDATE INFO BRANCHES
     if (fChain->GetBranch("candSize"))                    fChain->SetBranchAddress("candSize",                  &candSize_,                   &b_candSize                  );
@@ -803,10 +815,13 @@ void VertexCompositeNtuple::Clear(void)
   // CLEAR EVENT PLANE VARIABLES
   if (GetBranchStatus("ephfpSumW")==1)  ephfpSumW_ = -99.;
   if (GetBranchStatus("ephfmSumW")==1)  ephfmSumW_ = -99.;
+  if (GetBranchStatus("eptrackmidSumW")==1)  eptrackmidSumW_ = -99.;
   if (GetBranchStatus("ephfpAngle")==1) std::fill(ephfpAngle_, ephfpAngle_+NEP, -99.);
   if (GetBranchStatus("ephfpQ")==1)     std::fill(ephfpQ_, ephfpQ_+NEP, -99.);
   if (GetBranchStatus("ephfmAngle")==1) std::fill(ephfmAngle_, ephfmAngle_+NEP, -99.);
   if (GetBranchStatus("ephfmQ")==1)     std::fill(ephfmQ_, ephfmQ_+NEP, -99.);
+  if (GetBranchStatus("eptrackmidAngle")==1) std::fill(eptrackmidAngle_, eptrackmidAngle_+NEP, -99.);
+  if (GetBranchStatus("eptrackmidQ")==1)     std::fill(eptrackmidQ_, eptrackmidQ_+NEP, -99.);
 
   // CLEAR CANDIDATE INFO VARIABLES
   const auto& nCand = (candSize_>0 ? candSize_ : NCAND);
