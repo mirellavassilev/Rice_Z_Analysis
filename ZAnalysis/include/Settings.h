@@ -5,8 +5,17 @@
 class Settings{
 public:
 
+  double minMuonPt = 20;
+  double minElectronPt = 20;
+
   int nZMassBins = 30;
-  float zMassRange[2] = {60,120};
+  double zMassRange[2] = {60,120};
+
+  static const int nZPtBins = 14;
+  double zPtBins[nZPtBins] = {0,1.0,3.0,5.0,10.0,20.0,30.0,40.0,50.0,70.0,90.0,120.0,150.0,200.0};
+
+  static const int nZRapBins = 20;
+  double maxZRap = 3.0;
 
   int nMuEffBinsEta = 48;
   static const int nMuEffBinsPt = 11;

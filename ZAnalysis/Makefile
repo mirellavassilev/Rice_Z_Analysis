@@ -8,7 +8,7 @@ endif
 MKDIR_BIN=mkdir -p $(PWD)/bin
 
 
-all: mkdirBin bin/Z_EE_Channel.exe bin/Z_mumu_Channel.exe bin/massPeakPlots.exe bin/v2Plots.exe bin/Z_mumu_EfficienciesMC.exe
+all: mkdirBin bin/Z_EE_Channel.exe bin/Z_mumu_Channel.exe bin/massPeakPlots.exe bin/v2Plots.exe bin/Z_mumu_EfficienciesMC.exe bin/MCReweighting.exe
 
 mkdirBin:
 	$(MKDIR_BIN)
@@ -29,6 +29,8 @@ bin/massPeakPlots.exe: src/massPeakPlots.C
 bin/v2Plots.exe: src/v2Plots.C
 	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -o bin/v2Plots.exe src/v2Plots.C
 
+bin/MCReweighting.exe: src/MCReweighting.C
+	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -o bin/MCReweighting.exe src/MCReweighting.C
 
 clean:
 	rm -f $(PWD)/include/*~

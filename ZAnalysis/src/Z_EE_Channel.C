@@ -7,6 +7,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1D.h"
+#include "TH2D.h"
 #include "TMath.h"
 #include "TComplex.h"
 #include "TProfile.h"
@@ -33,6 +34,11 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
 
   TH1D * massPeakOS[nBins]; 
   TH1D * massPeakSS[nBins]; 
+  TH2D * massVsPt[nBins];
+  TH1D * candPt[nBins];
+  TH1D * candEta[nBins];
+  TH1D * candY[nBins];
+  TH1D * candPhi[nBins];
   
   TProfile * v2Num[nBins];
   TProfile * v2NumVsCent;
@@ -55,6 +61,12 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   for(int i = 0; i<nBins; i++){
     massPeakOS[i] = new TH1D(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{+}e^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
     massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{#pm}e^{#pm}}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
+    massVsPt[i] = new TH2D(Form("massVsPt_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{e^{#pm}e^{#pm}};p_{T}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1],s.nZPtBins-1,s.zPtBins);
+    candPt[i] = new TH1D(Form("candPt_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",s.nZPtBins-1,s.zPtBins);
+    candEta[i] = new TH1D(Form("candEta_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",20,-2.4,2.4);
+    candY[i] = new TH1D(Form("candY_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",20,-2.0,2.0);
+    candPhi[i] = new TH1D(Form("candPhi_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",20,-TMath::Pi(),TMath::Pi());
+
     v2Num[i] = new TProfile(Form("v2Num_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2Denom[i] = new TProfile(Form("v2Denom_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2Q1Mid[i] = new TProfile(Form("v2Q1Mid_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
@@ -196,8 +208,8 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
       //make a list of electrons passing our cuts
       std::vector< int > goodElectrons; 
       for(unsigned int j = 0; j < (unsigned int) nEle; j++){
-        if(elePt->at(j)<20) continue;
-        if(TMath::Abs(eleSCEta->at(j)) > 2.4) continue;
+        if(elePt->at(j)< s.minElectronPt) continue;
+        if(TMath::Abs(eleSCEta->at(j)) > 2.1) continue;
         //veto on dead endcap region
         if(eleSCEta->at(j) < -1.39 && eleSCPhi->at(j) < -0.9 && eleSCPhi->at(j) > -1.6) continue;
 
@@ -250,7 +262,14 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
           if(moreThan2) std::cout << j << " " << j2 << " " << Zcand.M() <<" " << Zcand.Pt() << " isOS? " << (int)isOppositeSign << std::endl;
           if( isOppositeSign){
             for(int k = 0; k<nBins; k++){
-              if(c.isInsideBin(hiBin,k)) massPeakOS[k]->Fill( Zcand.M() );
+              if(c.isInsideBin(hiBin,k)){
+                massPeakOS[k]->Fill( Zcand.M() );
+                massVsPt[k]->Fill(Zcand.M(), Zcand.Pt()); 
+                candPt[k]->Fill(Zcand.Pt());
+                candEta[k]->Fill(Zcand.Eta());
+                candY[k]->Fill(Zcand.Rapidity());
+                candPhi[k]->Fill(Zcand.Phi());
+              }
             }
           }else{
             for(int k = 0; k<nBins; k++){
@@ -351,6 +370,12 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->SetDirectory(0);
     massPeakSS[i]->SetDirectory(0);
+    massVsPt[i]->SetDirectory(0);
+    candPt[i]->SetDirectory(0);
+    candEta[i]->SetDirectory(0);
+    candY[i]->SetDirectory(0);
+    candPhi[i]->SetDirectory(0);
+
     v2Num[i]->SetDirectory(0);
     v2Denom[i]->SetDirectory(0);
     v2Q1Mid[i]->SetDirectory(0);
@@ -376,6 +401,12 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->Write();
     massPeakSS[i]->Write();
+    massVsPt[i]->Write();
+    candPt[i]->Write();
+    candEta[i]->Write();
+    candY[i]->Write();
+    candPhi[i]->Write();   
+ 
     v2Num[i]->Write();
     v2Denom[i]->Write();
     v2Q1Mid[i]->Write();

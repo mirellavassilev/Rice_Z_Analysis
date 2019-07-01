@@ -2,6 +2,7 @@
 #include "include/PbPb_5TeV_2018_eventUtils.h"
 #include "include/centralityTool.h"
 #include "include/Settings.h"
+#include "include/ZEfficiency.h"
 
 //ROOT stuff
 #include "TLorentzVector.h"
@@ -21,12 +22,15 @@
 void doZ2mumu(std::vector< std::string > files){
   TH1::SetDefaultSumw2();
   Settings s = Settings();
+  ZEfficiency zEff = ZEfficiency("resources/Z2mumu_Efficiencies.root");
 
   CentralityTool c = CentralityTool();
   const int nBins = c.getNCentBins();
 
   TH1D * massPeakOS[nBins]; 
   TH1D * massPeakSS[nBins]; 
+  TH1D * massPeakOS_withEff[nBins]; 
+  TH1D * massPeakSS_withEff[nBins]; 
   TProfile * v2Num[nBins];
   TProfile * v2NumVsCent;
   TProfile * v2Denom[nBins];
@@ -35,6 +39,11 @@ void doZ2mumu(std::vector< std::string > files){
   TProfile * v2Q1MidVsCent;
   TProfile * v2Q2Mid[nBins];
   TProfile * v2Q2MidVsCent;
+  
+  TH1D * candPt[nBins];
+  TH1D * candEta[nBins];
+  TH1D * candY[nBins];
+  TH1D * candPhi[nBins];
   
   
   TProfile * v2MuNum[nBins];
@@ -50,6 +59,12 @@ void doZ2mumu(std::vector< std::string > files){
   for(int i = 0; i<nBins; i++){
     massPeakOS[i] = new TH1D(Form("massPeakOS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{+}#mu^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
     massPeakSS[i] = new TH1D(Form("massPeakSS_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{#pm}#mu^{#pm}}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
+    massPeakOS_withEff[i] = new TH1D(Form("massPeakOS_withEff_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{+}#mu^{-}};counts",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
+    massPeakSS_withEff[i] = new TH1D(Form("massPeakSS_withEff_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";m_{#mu^{#pm}#mu^{#pm}}",s.nZMassBins,s.zMassRange[0],s.zMassRange[1]);
+    candPt[i] = new TH1D(Form("candPt_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",s.nZPtBins-1,s.zPtBins);
+    candEta[i] = new TH1D(Form("candEta_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",20,-2.4,2.4);
+    candY[i] = new TH1D(Form("candY_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",24,-2.4,2.4);
+    candPhi[i] = new TH1D(Form("candPhi_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),";p_{T}",20,-TMath::Pi(),TMath::Pi());
     
     v2Num[i] = new TProfile(Form("v2Num_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
     v2Denom[i] = new TProfile(Form("v2Denom_%d_%d",c.getCentBinLow(i),c.getCentBinHigh(i)),"",1,0,1);
@@ -91,9 +106,9 @@ void doZ2mumu(std::vector< std::string > files){
       if(i%1000==0) std::cout << i << std::endl;
 
       for(unsigned int j = 0; j<v.candSize(); j++){
-        
-        if( !(v.pTD1()[j] > 20 )) continue;
-        if( !(v.pTD2()[j] > 20 )) continue;
+        if( v.mass()[j] < s.zMassRange[0] || v.mass()[j] > s.zMassRange[1]) continue; 
+        if( !(v.pTD1()[j] > s.minMuonPt )) continue;
+        if( !(v.pTD2()[j] > s.minMuonPt )) continue;
         if( !(v.tightCand(j,"POG"))) continue;//tight Muon 1 && tight Muon 2      
         if( !(v.VtxProb()[j] >0.001)) continue; 
  
@@ -103,15 +118,25 @@ void doZ2mumu(std::vector< std::string > files){
         if( !(isDaughter1Trigger || isDaughter2Trigger) ) continue;
  
         bool isOppositeSign =  v.chargeD1()[j] != v.chargeD2()[j];
+        double efficiency = zEff.getEfficiency( v.y()[j], v.pT()[j] , v.centrality() );
+
         if( isOppositeSign){
           for(int k = 0; k<nBins; k++){
             if(c.isInsideBin(v.centrality(),k)){
               massPeakOS[k]->Fill( v.mass()[j] );
+              massPeakOS_withEff[k]->Fill( v.mass()[j], 1.0/efficiency );
+              candPt[k]->Fill(v.pT()[j]);
+              candEta[k]->Fill(v.eta()[j]);
+              candY[k]->Fill(v.y()[j]);
+              candPhi[k]->Fill(v.phi()[j]);
             }
           }
         }else{
           for(int k = 0; k<nBins; k++){
-            if(c.isInsideBin(v.centrality(),k)) massPeakSS[k]->Fill( v.mass()[j] );
+            if(c.isInsideBin(v.centrality(),k)){
+              massPeakSS[k]->Fill( v.mass()[j] );
+              massPeakSS_withEff[k]->Fill( v.mass()[j] , 1.0/efficiency);
+            }
           }
         }
 
@@ -197,6 +222,12 @@ void doZ2mumu(std::vector< std::string > files){
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->SetDirectory(0);
     massPeakSS[i]->SetDirectory(0);
+    massPeakOS_withEff[i]->SetDirectory(0);
+    massPeakSS_withEff[i]->SetDirectory(0);
+    candPt[i]->SetDirectory(0);
+    candEta[i]->SetDirectory(0);
+    candY[i]->SetDirectory(0);
+    candPhi[i]->SetDirectory(0);
     v2Num[i]->SetDirectory(0);
     v2Denom[i]->SetDirectory(0);
     v2Q1Mid[i]->SetDirectory(0);
@@ -221,6 +252,12 @@ void doZ2mumu(std::vector< std::string > files){
   for(int i = 0; i<nBins; i++){
     massPeakOS[i]->Write();
     massPeakSS[i]->Write();
+    massPeakOS_withEff[i]->Write();
+    massPeakSS_withEff[i]->Write();
+    candPt[i]->Write();
+    candEta[i]->Write();
+    candY[i]->Write();
+    candPhi[i]->Write();   
     v2Num[i]->Write();
     v2Denom[i]->Write();
     v2Q1Mid[i]->Write();
