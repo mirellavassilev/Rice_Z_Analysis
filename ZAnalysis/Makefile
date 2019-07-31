@@ -8,11 +8,13 @@ endif
 MKDIR_BIN=mkdir -p $(PWD)/bin
 
 
-all: mkdirBin bin/Z_EE_Channel.exe bin/Z_mumu_Channel.exe bin/massPeakPlots.exe bin/v2Plots.exe bin/Z_mumu_EfficienciesMC.exe bin/MCReweighting.exe
+all: mkdirBin bin/unfold.exe bin/Z_EE_Channel.exe bin/Z_mumu_Channel.exe bin/massPeakPlots.exe bin/v2Plots.exe bin/Z_mumu_EfficienciesMC.exe bin/MCReweighting.exe
 
 mkdirBin:
 	$(MKDIR_BIN)
 
+bin/unfold.exe: src/unfold.C
+	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -L$(PWD) -lRooUnfold -o bin/unfold.exe src/unfold.C
 
 bin/Z_EE_Channel.exe: src/Z_EE_Channel.C
 	$(CXX) $(CXXFLAGS) $(ROOT) -I $(PWD) -o bin/Z_EE_Channel.exe src/Z_EE_Channel.C
