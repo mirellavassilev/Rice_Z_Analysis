@@ -106,6 +106,7 @@ TH1D *ricoy=new TH1D("ricoy","",13,-2.1,2.1);
 
 Float_t centBins[]={0,10,20,40,60,80,100,140,180};
 TH1D *acccorr= new TH1D("acccorr","",8,centBins);
+TH1D *acccorr2= new TH1D("acccorr2","",8,centBins);
 //Respose Matrix
 TH2D *Response= new TH2D("Response","",nptBins,Bins,nptBins,Bins);
 TH2D * SmearResponse=new TH2D ("SmearResponse","",nptBins,Bins,nptBins,Bins);
@@ -140,7 +141,13 @@ TH2D * SmearResponse=new TH2D ("SmearResponse","",nptBins,Bins,nptBins,Bins);
         //only look at gen Z's
         if(v.PID_gen()[j] != 23) continue;
  
-
+//Acceptance Correction//
+	if( TMath::Abs( v.y_gen()[j])<2.4 && v.mass()[j]>20 && v.mass()[j]<120){
+        acccorr->Fill(v.centrality());
+	}
+       if( TMath::Abs( v.y_gen()[j])<2.4 && v.mass()[j]>20 && v.mass()[j]<120 && v.pTD1_gen()[j]>20 && v.pTD2_gen()[j]>20 &&TMath::Abs( v.EtaD1_gen()[j] ) < 2.4 && TMath::Abs( v.EtaD2_gen()[j] ) < 2.4){
+        acccorr2->Fill(v.centrality());
+        }
         
         //require both legs to be in acceptance
         if( TMath::Abs( v.EtaD1_gen()[j] ) > 2.4 ) continue;
@@ -397,6 +404,11 @@ sigc->Draw();
  sigcen->SaveAs("plots/sigcenhis.pdf");
  sigcen->SaveAs("plots/sigcenhis.png");
 
+TCanvas *acceptancecent=new TCanvas("acceptancecent", "Acceptance Correction");
+TH1D*acccent=(TH1D*) acccorr->Clone("acccent");
+acccent->Divide(acccorr2);
+acccent->Draw();
+acceptancecent->SaveAs("plots/acceptancecent.pdf");
 
 
     for(int i = 0; i<nBins; i++){
