@@ -39,7 +39,7 @@ void doZ2mumuMC(std::vector< std::string > files){
   const int nBins = c.getNCentBins();
 
   TRandom3 r = TRandom3();
-
+  TRandom3 * r1 = new TRandom3();
 ////////////////////////////////////////Create Histograms//////////////////////////////////////////////////
   TH2D * recoEff_pass[nBins];
   TH2D * recoEff_net[nBins];
@@ -49,7 +49,9 @@ void doZ2mumuMC(std::vector< std::string > files){
   
 //Resolution
   TH1D *res= new TH1D("res","Resolution",30,-.2,.2);
- 
+  TH1D *yreso= new TH1D("yreso","Rapidity Resolution",35,-.2,.2);
+   
+
   TH1D *rc1= new TH1D("rc1","Centrality 0-20",30,-.2,.2);
   TF1 *g1  = new TF1("g1","gaus",-.05,.05);
   TH1D *rc2= new TH1D("rc2","Centrality 20-60",30,-.2,.2);
@@ -83,15 +85,31 @@ void doZ2mumuMC(std::vector< std::string > files){
   TF1 *y11  = new TF1("y11","gaus",-.05,.05);
   TH1D *ry12= new TH1D("ry12","y 2/2.4",30,-.2,.2);
   TF1 *y12  = new TF1("y12","gaus",-.05,.05);
+//Rapidity 
+  TH1D *rc1y= new TH1D("rc1y","Centrality 0-20",30,-.2,.2);
+  TF1 *g1y  = new TF1("g1y","gaus",-.1,.1);
+  TH1D *rc2y= new TH1D("rc2y","Centrality 20-60",30,-.2,.2);
+  TF1 *g2y  = new TF1("g2y","gaus",-.1,.1);
+  TH1D *rc3y= new TH1D("rc3y","Centrality 60-100",30,-.2,.2);
+  TF1 *g3y  = new TF1("g3y","gaus",-.1,.1);
+  TH1D *rc4y= new TH1D("rc4y","Centrality 100-200",30,-.2,.2);
+  TF1 *g4y  = new TF1("g4y","gaus",-.1,.1);
+
 
 // pT 
 Float_t Bins[]={0,1.0,3.0,5.0,10.0,20.0,30.0,40.0,50.0,70.0,90.0,120.0,150.0,200.0};
 Int_t  nptBins = 13;
 TH1D *genn=new TH1D("genn","",nptBins,Bins);
 TH1D *rico=new TH1D("rico","",nptBins,Bins);
+TH1D *genny=new TH1D("genny","",13,-2.1,2.1);
+TH1D *ricoy=new TH1D("ricoy","",13,-2.1,2.1);
+
+Float_t centBins[]={0,10,20,40,60,80,100,140,180};
+TH1D *acccorr= new TH1D("acccorr","",8,centBins);
 //Respose Matrix
 TH2D *Response= new TH2D("Response","",nptBins,Bins,nptBins,Bins);
-
+TH2D * SmearResponse=new TH2D ("SmearResponse","",nptBins,Bins,nptBins,Bins);
+  TH2D *yResponse= new TH2D ("Rapidity Response Matrix","",13,-2.1,2.1,13,-2.1,2.1);
 //////////////////////////////////////////Select Events////////////////////////////////////////////
     for(int k = 0; k<nBins; k++){
     recoEff_pass[k] = new TH2D(Form("recoEff_pass_%d_%d",c.getCentBinLow(k),c.getCentBinHigh(k)),"",s.nZRapBins,-s.maxZRap,s.maxZRap,s.nZPtBins-1,s.zPtBins);
@@ -121,7 +139,9 @@ TH2D *Response= new TH2D("Response","",nptBins,Bins,nptBins,Bins);
 
         //only look at gen Z's
         if(v.PID_gen()[j] != 23) continue;
+ 
 
+        
         //require both legs to be in acceptance
         if( TMath::Abs( v.EtaD1_gen()[j] ) > 2.4 ) continue;
         if( TMath::Abs( v.EtaD2_gen()[j] ) > 2.4 ) continue;
@@ -168,14 +188,19 @@ TH2D *Response= new TH2D("Response","",nptBins,Bins,nptBins,Bins);
 	
 	//Fill Response Histogram
 	Response->Fill(v.pT()[v.RecIdx_gen()[j]],v.pT_gen()[j]);
+	SmearResponse->Fill(v.pT()[v.RecIdx_gen()[j]] * r1->Gaus(1,0.03),v.pT_gen()[j]);
+          yResponse->Fill(v.y()[v.RecIdx_gen()[j]],v.y_gen()[j]);
 	//Fill gen and rico
 	genn->Fill(v.pT_gen()[j]);
 	rico->Fill(v.pT()[v.RecIdx_gen()[j]]);	   
-    
+        genny->Fill(v.y_gen()[j]);
+        ricoy->Fill(v.y()[v.RecIdx_gen()[j]]);   
 
    //Fill Resolution
        res->Fill((v.pT_gen()[j]-v.pT()[v.RecIdx_gen()[j]])/v.pT_gen()[j]);
+       yreso->Fill(v.y_gen()[j]-v.y()[v.RecIdx_gen()[j]]);
     
+//Fill Resolution by Centrality and Rapidity pT
 	if (v.centrality()>0&&v.centrality()<20) { 
 	rc1->Fill((v.pT_gen()[j]-v.pT()[v.RecIdx_gen()[j]])/v.pT_gen()[j]);	
 	rc1->SetLineColor(kGreen);
@@ -230,7 +255,25 @@ TH2D *Response= new TH2D("Response","",nptBins,Bins,nptBins,Bins);
         }
 	else if(v.y_gen()[j]>2.0&&v.y_gen()[j]<2.4){
         ry12->Fill((v.pT_gen()[j]-v.pT()[v.RecIdx_gen()[j]])/v.pT_gen()[j]);
+//Fill Resolution by centrality Rapidity
+ 
+          if (v.centrality()>0&&v.centrality()<20) {
+        rc1y->Fill(v.y_gen()[j]-v.y()[v.RecIdx_gen()[j]]);
+        rc1y->SetLineColor(kGreen);
         }
+        else if (v.centrality()>20&&v.centrality()<60) {
+        rc2y->Fill(v.y_gen()[j]-v.y()[v.RecIdx_gen()[j]]);
+        rc2y->SetLineColor(kBlue);
+        }
+        else if (v.centrality()>60&&v.centrality()<100) {
+        rc3y->Fill(v.y_gen()[j]-v.y()[v.RecIdx_gen()[j]]);
+        rc3y->SetLineColor(kRed);
+        }
+        else if (v.centrality()>100&&v.centrality()<200) {
+        rc4y->Fill(v.y_gen()[j]-v.y()[v.RecIdx_gen()[j]]);
+        rc4y->SetLineColor(kYellow);
+        }   
+     }
 
       }
     }
@@ -239,6 +282,11 @@ rc1->Fit(g1,"","",-.05,.05);
 rc2->Fit(g2,"","",-.05,.05);
 rc3->Fit(g3,"","",-.05,.05);
 rc4->Fit(g4,"","",-.05,.05);
+
+rc1y->Fit(g1y,"","",-.05,.05);
+rc2y->Fit(g2y,"","",-.05,.05);
+rc3y->Fit(g3y,"","",-.05,.05);
+rc4y->Fit(g4y,"","",-.05,.05);
 
 ry1->Fit(y1,"","",-.05,.05);
 ry2->Fit(y2,"","",-.05,.05);
@@ -366,6 +414,7 @@ sigc->Draw();
     recoEff_net[i]->SetDirectory(0);
 }
     res->SetDirectory(0);
+    yreso->SetDirectory(0);
     rc1->SetDirectory(0);
     rc2->SetDirectory(0);
     rc3->SetDirectory(0);
@@ -386,7 +435,7 @@ sigc->Draw();
     Response->SetDirectory(0);
     genn->SetDirectory(0);
     rico->SetDirectory(0);
-   
+    SmearResponse->SetDirectory(0); 
 
 THStack *hs = new THStack("hs","Resolution");
 hs->Add(res);
@@ -395,24 +444,67 @@ hs->Add(rc2);
 hs->Add(rc3);
 hs->Add(rc4);
 
+TCanvas *Yrat=new TCanvas("Yrat","");
+TH1D *yrat=(TH1D*) genny->Clone("yrat");
+yrat->Divide(ricoy);
+yrat->GetXaxis()->SetTitle("y");
+yrat->GetYaxis()->SetTitle("y_gen/y");
+yrat->Draw();
+Yrat->SaveAs ("plots/Yrat.pdf");
+
   TCanvas *ccent=new TCanvas("ccent","Resolution centrality dependance");
   ccent->Divide(2,2);
   ccent->cd(1);
-  rc1->Draw();
-  g1->Draw("same");
+ rc1y->GetXaxis()->SetTitle("y_gen-y");
+ rc1y->Draw();
+  g1y->Draw("same");
   ccent->cd(2);
-  rc2->Draw();
-  g2->Draw("same");
+rc2y->GetXaxis()->SetTitle("y_gen-y");
+  rc2y->Draw();
+  g2y->Draw("same");
   ccent->cd(3);
-  rc3->Draw();
-  g3->Draw("same");
+rc3y->GetXaxis()->SetTitle("y_gen-y");  
+rc3y->Draw();
+  g3y->Draw("same");
   ccent->cd(4);
-  rc4->Draw();
-  g4->Draw("same");
+rc4y->GetXaxis()->SetTitle("y_gen-y");  
+rc4y->Draw();
+  g4y->Draw("same");
 
- ccent->SaveAs("plots/centres.pdf");
- ccent->SaveAs("plots/centres.png");
+ ccent->SaveAs("plots/ycentres.pdf");
+ ccent->SaveAs("plots/ycentres.png");
  
+ TCanvas * yResponsec= new TCanvas("yResponsec","");
+yResponse->GetYaxis()->SetTitle("y");
+yResponse->GetXaxis()->SetTitle("y_gen");
+yResponsec->SetLogz();
+yResponse->Draw("COLZ");
+yResponsec->SaveAs("plots/yResponse.pdf");
+
+TCanvas*yresoc=new TCanvas("yresoc","");
+yreso->GetXaxis()->SetTitle("y_gen-y");
+yreso->Draw();
+yresoc->SaveAs("plots/yresolution.pdf");
+
+
+  TCanvas *ccenty=new TCanvas("ccenty","Rapidity Resolution centrality dependance");
+  ccenty->Divide(2,2);
+  ccenty->cd(1);
+  rc1y->Draw();
+  g1y->Draw("same");
+  ccenty->cd(2);
+  rc2y->Draw();
+  g2y->Draw("same");
+  ccenty->cd(3);
+  rc3y->Draw();
+  g3y->Draw("same");
+  ccenty->cd(4);
+  rc4y->Draw();
+  g4y->Draw("same");
+
+ ccenty->SaveAs("plots/centresy.pdf");
+ ccenty->SaveAs("plots/centresy.png");
+
   TCanvas *cy=new TCanvas("cy","Resolution y dependance");
   cy->Divide(3,4);
   cy->cd(1);
@@ -457,7 +549,6 @@ hs->Add(rc4);
  cy->SaveAs("plots/yres.png");
 
 
-
   TFile * output = new TFile("resources/Z2mumu_Efficiencies.root","recreate");
   for(int i = 0; i<nBins; i++){
    recoEff[i]->Write();
@@ -469,32 +560,14 @@ TH1D* rationum=(TH1D*) rico->Clone("rationum");
 rationum->Divide(genn);
     
      res->Write();
+     yreso->Write();
 
-//     rc1->Write();
-//     rc2->Write();
-//     rc3->Write();
-//     rc4->Write();
-//     hs->Write();
-   
-//     cy->Write();
-   //  ry1->Write();
-    // ry2->Write();
-    // ry3->Write();
-    // ry4->Write();
-    // ry5->Write();
-    // ry6->Write();
-    // ry7->Write();
-    // ry8->Write();
-    // ry9->Write();
-    // ry10->Write();
-    // ry11->Write();
-   //  ry12->Write();
   Response->Write();
   genn->Write();
   rico->Write();
   rationum->Write();
+  SmearResponse->Write();
   output->Close();
-
   return;
 }
 

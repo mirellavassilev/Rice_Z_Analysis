@@ -182,6 +182,105 @@ bbb->SaveAs("plots/bbbe.pdf");
   invbb->Draw();
   bbbinv->SaveAs("plots/bbbinve.pdf");
 
+
+/////////////////////////Systematics/////////////////////////////
+TFile* sys=new TFile("systematics_ee_isMu210.root");
+TH1D *pT_totalError_0_90= (TH1D*)sys->Get("pT_totalError_0_90");
+pT_totalError_0_90->Draw("COLZ");
+
+TH1D* mod=(TH1D*) data->Clone("mod");
+TH1D*dataplus=(TH1D*) data->Clone("dataplus");
+TH1D*dataminus=(TH1D*) data->Clone("dataminus");
+
+Float_t w[]={};
+for( int i=1; i<nBins; i++){
+w[i]=pT_totalError_0_90->GetBinContent(i);
+mod->SetBinContent(i,data->GetBinContent(i)*w[i]);
+dataplus->SetBinContent(i,data->GetBinContent(i)+mod->GetBinContent(i));
+dataminus->SetBinContent(i,data->GetBinContent(i)-mod->GetBinContent(i));
+}
+////////////Unfold Bin-by-Bin//////////////////
+RooUnfoldBinByBin unfoldsys (&response,dataplus);
+TH1D* dataplusu= (TH1D*) unfoldsys.Hreco();
+RooUnfoldBinByBin unfoldsys2 (&response,dataminus);
+TH1D* dataminusu= (TH1D*) unfoldsys2.Hreco();
+TCanvas *sysefferr=new TCanvas ("sysefferr","");
+dataplusu->Draw("");
+dataminusu->SetLineColor(kRed);
+dataminusu->Draw("SAME");
+hReco2->SetLineColor(kBlack);
+hReco2->Draw("SAME");
+sysefferr->SaveAs("plots/systoterre.pdf");
+//Ratio
+TCanvas *totsysbb=new TCanvas ("totsysrat");
+ TH1D* lower=(TH1D*) dataminusu->Clone("lower");
+ lower->Divide(hReco2);
+ TH1D* upper=(TH1D*) dataplusu->Clone("upper");
+ upper->Divide(hReco2);
+lower->SetTitle("Bin-by-Bin Propagated Systematic Error");
+lower->GetYaxis()->SetRangeUser(0.7,1.2);
+lower->SetLineColor(kBlack);
+lower->Draw();
+upper->SetLineColor(kRed);
+upper->Draw("SAME");
+  auto legend7=new TLegend(.3,.75,.7,.9);
+legend7->AddEntry(upper,"upper","l");
+legend7->AddEntry(lower,"lower","l");
+legend7->Draw();
+totsysbb->SaveAs("plots/totsysbbe.pdf");
+//Unfold Matrix Inversion//
+RooUnfoldInvert unfoldsysi (&response,dataplus);
+TH1D* dataplusui= (TH1D*) unfoldsysi.Hreco();
+RooUnfoldBinByBin unfoldsysi2 (&response,dataminus);
+TH1D* dataminusui= (TH1D*) unfoldsys2.Hreco();
+TCanvas *sysefferri=new TCanvas ("sysefferri","");
+dataplusui->Draw("");
+dataminusui->SetLineColor(kRed);
+dataminusui->Draw("SAME");
+hReco3->SetLineColor(kBlack);
+hReco3->Draw("SAME");
+sysefferri->SaveAs("plots/systoterrie.pdf");
+//Ratio//
+TCanvas *totsysi=new TCanvas ("totsysi");
+ TH1D* loweri=(TH1D*) dataminusui->Clone("loweri");
+ loweri->Divide(hReco3);
+ TH1D* upperi=(TH1D*) dataplusui->Clone("upperi");
+ upperi->Divide(hReco3);
+loweri->SetTitle("Matrix Inversion Propagated Systematic Error");
+loweri->SetLineColor(kBlack);
+loweri->Draw();
+upperi->SetLineColor(kRed);
+upperi->Draw("SAME");
+  auto legend8=new TLegend(.3,.75,.7,.9);
+legend8->AddEntry(upperi,"upper","l");
+legend8->AddEntry(loweri,"lower","l");
+legend8->Draw();
+totsysi->SaveAs("plots/totsysie.pdf");
+//Smeared Response Matrix
+TH2D* SmearResponse=(TH2D*)f->Get("SmearResponse");
+SmearResponse->Draw("COLZ");
+RooUnfoldResponse response2 (0,0,SmearResponse,"","");
+
+RooUnfoldBinByBin unfoldsbb (&response2,data);
+TH1D* smearbb= (TH1D*) unfoldsbb.Hreco();
+TCanvas *bbsmear=new TCanvas ("bbsmear");
+TH1D*bbsmearratio=(TH1D*) smearbb->Clone("bbsmearratio");
+bbsmearratio->Divide(hReco2);
+RooUnfoldInvert unfoldsmi (&response2,data);
+TH1D* smearmi =(TH1D*) unfoldsmi.Hreco();
+TH1D*mismearratio=(TH1D*) smearmi->Clone("mismearratio");
+mismearratio->Divide(hReco3);
+bbsmearratio->SetTitle("Smeared Bin-by-Bin Unfolding/Bin-by-Bin Unfolding");
+bbsmearratio->SetLineColor(kRed);
+bbsmearratio->Draw();
+mismearratio->SetLineColor(kBlue);
+mismearratio->Draw("SAME");
+
+auto legend9=new TLegend(.3,.75,.7,.9);
+legend9->AddEntry(bbsmearratio,"Bin-by-Bin","l");
+legend9->AddEntry(mismearratio,"Matrix Inversion","l");
+legend9->Draw();
+bbsmear->SaveAs("plots/smeare.pdf");
 }
 
 

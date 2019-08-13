@@ -9,6 +9,7 @@
 #include "include/MCReweighte.h"
 #include "include/ElectronTnPe.h"
 
+#include "TRandom3.h"
 #include <TLegend.h>
 #include "TLorentzVector.h"
 #include "TFile.h"
@@ -47,6 +48,8 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   CentralityTool c = CentralityTool();
   const int nBins = c.getNCentBins();
   
+  TRandom3 * r1 = new TRandom3();
+
   TH1D * recoEff_pt_pass[nBins];
   TH1D * recoEff_pt_net[nBins];
   TH1D * recoEff_pt[nBins];  
@@ -78,47 +81,29 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   TEfficiency * eff_noSF[nBins];
   ///////Histograms Resolution///////////////////////////
   TH1D *res= new TH1D("res","Resolution",30,-.2,.2);
-//  TH1D *rc1= new TH1D("rc1","Centrality 0-20",30,-.2,.2);
-//  TF1 *g1  = new TF1("g1","gaus",-.05,.05);
-//  TH1D *rc2= new TH1D("rc2","Centrality 20-60",30,-.2,.2);
-//  TF1 *g2  = new TF1("g2","gaus",-.05,.05);
-//  TH1D *rc3= new TH1D("rc3","Centrality 60-100",30,-.2,.2);
-// TF1 *g3  = new TF1("g3","gaus",-.05,.05);
-// TH1D *rc4= new TH1D("rc4","Centrality 100-200",30,-.2,.2);
-//  TF1 *g4  = new TF1("g4","gaus",-.05,.05);
- 
-//  TH1D *ry1= new TH1D("ry1","y -2.4/-2",30,-.2,.2);
-//  TF1 *y1  = new TF1("y1","gaus",-.05,.05);
-//  TH1D *ry2= new TH1D("ry2","y -2/-1.6",30,-.2,.2);
- //TF1 *y2  = new TF1("y2","gaus",-.05,.05);
- // TH1D *ry3= new TH1D("ry3","y -1.6/-1.2",30,-.2,.2);
-//  TF1 *y3  = new TF1("y3","gaus",-.05,.05);
-//  TH1D *ry4= new TH1D("ry4","y -1.2/-.8",30,-.2,.2);
-//  TF1 *y4  = new TF1("y4","gaus",-.05,.05);
-//  TH1D *ry5= new TH1D("ry5","y -.8/-.4",30,-.2,.2);
-//  TF1 *y5  = new TF1("y5","gaus",-.05,.05);
-//  TH1D *ry6= new TH1D("ry6","y -.4/0",30,-.2,.2);
-//  TF1 *y6  = new TF1("y6","gaus",-.05,.05);
-//  TH1D *ry7= new TH1D("ry7","y 0/.4",30,-.2,.2);
-//  TF1 *y7  = new TF1("y7","gaus",-.05,.05);
-// TH1D *ry8= new TH1D("ry8","y .4/.8",30,-.2,.2);
-//  TF1 *y8  = new TF1("y8","gaus",-.05,.05);
-//  TH1D *ry9= new TH1D("ry9","y .8/1.2",30,-.2,.2);
-//  TF1 *y9  = new TF1("y9","gaus",-.05,.05);
-//  TH1D *ry10= new TH1D("ry10","y 1.2/1.6",30,-.2,.2);
-// TF1 *y10  = new TF1("y10","gaus",-.05,.05);
-//  TH1D *ry11= new TH1D("ry11","y 1.6/2",30,-.2,.2); 
-// TF1 *y11  = new TF1("y11","gaus",-.05,.05);
-//  TH1D *ry12= new TH1D("ry12","y 2/2.4",30,-.2,.2);
-//  TF1 *y12  = new TF1("y12","gaus",-.05,.05);
+    TH1D *yreso= new TH1D("yreso","Rapidity Resolution",35,-.2,.2);
 
   // pT 
   Float_t Bins[]={0,1.0,3.0,5.0,10.0,20.0,30.0,40.0,50.0,70.0,90.0,120.0,150.0,200.0};
   Int_t  nptBins = 13; 
   TH1D *genn=new TH1D("genn","",nptBins,Bins);
   TH1D *rico=new TH1D("rico","",nptBins,Bins);
-  //Respose Matrix
+    TH1D *genny=new TH1D("genny","",13,-2.1,2.1);
+  TH1D *ricoy=new TH1D("ricoy","",13,-2.1,2.1);
+ //Respose Matrix
   TH2D *Response= new TH2D("Response","",nptBins,Bins,nptBins,Bins);
+  TH2D * SmearResponse=new TH2D ("SmearResponse","",nptBins,Bins,nptBins,Bins);
+  TH2D *yResponse= new TH2D ("Rapidity Response Matrix","",13,-2.4,2.4,13,-2.4,2.4);
+  TH1D *ybb=new TH1D ("Rapidity Resolution","",12,-2.4,2.4);
+ 
+ TH1D *rc1= new TH1D("rc1","Centrality 0-20",30,-.2,.2);
+  TF1 *g1  = new TF1("g1","gaus",-.1,.1);
+  TH1D *rc2= new TH1D("rc2","Centrality 20-60",30,-.2,.2);
+  TF1 *g2  = new TF1("g2","gaus",-.1,.1);
+  TH1D *rc3= new TH1D("rc3","Centrality 60-100",30,-.2,.2);
+  TF1 *g3  = new TF1("g3","gaus",-.1,.1);
+  TH1D *rc4= new TH1D("rc4","Centrality 100-200",30,-.2,.2);
+  TF1 *g4  = new TF1("g4","gaus",-.1,.1);
 
 ////////////////////////////////////////////////////////////
   for(int k = 0; k<nBins; k++){
@@ -389,15 +374,35 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
 //////////////////////Fill Resolution Histograms////////////////////////
   //Fill Response Histogram
   Response->Fill(Zcand.Pt(),mom.Pt());
-  //Fill gen and rico
+  SmearResponse->Fill(Zcand.Pt() *r1->Gaus(1,0.05),mom.Pt());  
+  yResponse->Fill(Zcand.Rapidity(),mom.Rapidity());
+//Fill gen and rico
   genn->Fill(mom.Pt());
   rico->Fill(Zcand.Pt());
-  //Fill Resolution
+  genny->Fill(mom.Rapidity());
+  ricoy->Fill(Zcand.Rapidity());
+ //Fill Resolution
   res->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+  yreso->Fill(mom.Rapidity()-Zcand.Rapidity());
+ybb->Fill(Zcand.Rapidity()/mom.Rapidity());
 
 
-
-
+        if (hiBin>0&&hiBin<20) {
+        rc1->Fill(mom.Rapidity()-Zcand.Rapidity());
+        rc1->SetLineColor(kGreen);
+        }
+        else if (hiBin>20&&hiBin<60) {
+        rc2->Fill(mom.Rapidity()-Zcand.Rapidity());
+        rc2->SetLineColor(kBlue);
+        }
+        else if (hiBin>60&&hiBin<100) {
+        rc3->Fill(mom.Rapidity()-Zcand.Rapidity());
+        rc3->SetLineColor(kRed);
+        }
+        else if (hiBin>100&&hiBin<200) {
+        rc4->Fill(mom.Rapidity()-Zcand.Rapidity());
+        rc4->SetLineColor(kYellow);
+        }
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -554,11 +559,54 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
     recoEff_cent_net[i]->SetDirectory(0);
   }
     
+rc1->Fit(g1,"","",-.05,.05);
+rc2->Fit(g2,"","",-.05,.05);
+rc3->Fit(g3,"","",-.05,.05);
+rc4->Fit(g4,"","",-.05,.05);
+
  
 res->SetDirectory(0);
+yreso->SetDirectory(0);
 genn->SetDirectory(0);
 rico->SetDirectory(0);
 Response->SetDirectory(0);
+ricoy->SetDirectory(0);
+genny->SetDirectory(0);
+SmearResponse->SetDirectory(0);
+yResponse->SetDirectory(0);
+ybb->SetDirectory(0);
+    rc1->SetDirectory(0);
+    rc2->SetDirectory(0);
+    rc3->SetDirectory(0);
+    rc4->SetDirectory(0);
+
+
+  TCanvas *ccent=new TCanvas("ccent","Resolution centrality dependance");
+  ccent->Divide(2,2);
+  ccent->cd(1);
+  rc1->GetXaxis()->SetTitle("mom.Rapidity-Zcand.Rapidity");
+  rc1->Draw();
+  g1->Draw("same");
+  ccent->cd(2);
+  rc2->GetXaxis()->SetTitle("mom.Rapidity-Zcand.Rapidity");
+  rc2->Draw();
+  g2->Draw("same");
+  ccent->cd(3);
+  rc3->GetXaxis()->SetTitle("mom.Rapidity-Zcand.Rapidity");
+  rc3->Draw();
+  g3->Draw("same");
+  ccent->cd(4);
+  rc4->GetXaxis()->SetTitle("mom.Rapidity-Zcand.Rapidity");
+  rc4->Draw();
+  g4->Draw("same");
+
+ ccent->SaveAs("plots/ycentrese.pdf");
+ ccent->SaveAs("plots/ycentrese.png");
+
+TCanvas*yresoc=new TCanvas("yresoc","");
+yreso->GetXaxis()->SetTitle("mom.Rapidity-Zcand.Rapidity");
+yreso->Draw();
+yresoc->SaveAs("plots/yresolutione.pdf");
 
   TFile * output = new TFile(Form("resources/Z2ee_EfficiencyMC_%d.root",jobNumber),"recreate");
   for(int i = 0; i<nBins; i++){
@@ -594,10 +642,15 @@ Response->SetDirectory(0);
   }
   
  res->Write();
- genn->Write();
+ yreso->Write(); 
+genn->Write();
  rico->Write();
+genny->Write();
+ricoy->Write();
 Response->Write();
-   
+  SmearResponse->Write();   
+yResponse->Write();
+ybb->Write();
   output->Close();
 
   timer.Stop();
@@ -605,7 +658,6 @@ Response->Write();
 
 
 ////////////////////////Make Canvas////////////////////////////////////
-
 
 TCanvas *Res = new TCanvas("Res","");
 res->Draw();
@@ -615,7 +667,20 @@ TCanvas *response = new TCanvas("responsee","");
 Response->Draw();
 response->SaveAs("plots/responsee.pdf");
 
+ TCanvas * yResponsec= new TCanvas("yResponsec","");
+yResponse->GetYaxis()->SetTitle("Zcand.Rapidity");
+yResponse->GetXaxis()->SetTitle("mom.Rapidity");
+yResponsec->SetLogz();
+yResponse->Draw("COLZ");
+yResponsec->SaveAs("plots/yResponsee.pdf");
 
+TCanvas *Yrate=new TCanvas("Yrate","");
+TH1D *yrat=(TH1D*) genny->Clone("yrat");
+yrat->Divide(ricoy);
+yrat->GetXaxis()->SetTitle("Rapidity");
+yrat->GetYaxis()->SetTitle("mom.Rapidity/Zcand.Rapidity");
+yrat->Draw();
+Yrate->SaveAs ("plots/Yrate.pdf");
 /////////////////////////////////////////////////////////////////////////
 
 

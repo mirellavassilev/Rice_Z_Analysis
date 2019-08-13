@@ -277,6 +277,32 @@ legend8->AddEntry(loweri,"lower","l");
 legend8->Draw();
 totsysi->SaveAs("plots/totsysi.pdf");
 
+/////////////Smeared Response Error//////
+TH2D* SmearResponse=(TH2D*)f->Get("SmearResponse");
+SmearResponse->Draw("COLZ");
+RooUnfoldResponse response2 (0,0,SmearResponse,"","");
+//Bin-by-Bin//
+RooUnfoldBinByBin unfoldsbb (&response2,data);
+TH1D* smearbb= (TH1D*) unfoldsbb.Hreco();
+TCanvas *bbsmear=new TCanvas ("bbsmear");
+TH1D*bbsmearratio=(TH1D*) smearbb->Clone("bbsmearratio");
+bbsmearratio->Divide(hReco2);
+RooUnfoldInvert unfoldsmi (&response2,data);
+TH1D* smearmi =(TH1D*) unfoldsmi.Hreco();
+TH1D*mismearratio=(TH1D*) smearmi->Clone("mismearratio");
+mismearratio->Divide(hReco3);
+bbsmearratio->SetTitle("Smeared Bin-by-Bin Unfolding/Bin-by-Bin Unfolding");
+bbsmearratio->SetLineColor(kRed);
+bbsmearratio->Draw();
+mismearratio->SetLineColor(kBlue);
+mismearratio->Draw("SAME");
+
+auto legend9=new TLegend(.3,.75,.7,.9);
+legend9->AddEntry(bbsmearratio,"Bin-by-Bin","l");
+legend9->AddEntry(mismearratio,"Matrix Inversion","l");
+legend9->Draw();
+bbsmear->SaveAs("plots/smear.pdf");
+
 }
 
 #ifndef __CINT__
