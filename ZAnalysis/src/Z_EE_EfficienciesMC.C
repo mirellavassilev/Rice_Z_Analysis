@@ -79,6 +79,9 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   TH2D * recoEff_noSF_net[nBins];
   TH2D * recoEff_noSF[nBins];
   TEfficiency * eff_noSF[nBins];
+
+//Float_t centBins[]={0,10,20,40,60,80,100,140,180};
+
   ///////Histograms Resolution///////////////////////////
   TH1D *res= new TH1D("res","Resolution",30,-.2,.2);
     TH1D *yreso= new TH1D("yreso","Rapidity Resolution",35,-.2,.2);
@@ -104,6 +107,34 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
   TF1 *g3  = new TF1("g3","gaus",-.1,.1);
   TH1D *rc4= new TH1D("rc4","Centrality 100-200",30,-.2,.2);
   TF1 *g4  = new TF1("g4","gaus",-.1,.1);
+
+  TH1D *ry1= new TH1D("ry1","y -2.4/-2",30,-.2,.2);
+  TF1 *y1  = new TF1("y1","gaus",-.05,.05);
+  TH1D *ry2= new TH1D("ry2","y -2/-1.6",30,-.2,.2);
+  TF1 *y2  = new TF1("y2","gaus",-.05,.05);
+  TH1D *ry3= new TH1D("ry3","y -1.6/-1.2",30,-.2,.2);
+  TF1 *y3  = new TF1("y3","gaus",-.05,.05);
+  TH1D *ry4= new TH1D("ry4","y -1.2/-.8",30,-.2,.2);
+  TF1 *y4  = new TF1("y4","gaus",-.05,.05);
+  TH1D *ry5= new TH1D("ry5","y -.8/-.4",30,-.2,.2);
+  TF1 *y5  = new TF1("y5","gaus",-.05,.05);
+  TH1D *ry6= new TH1D("ry6","y -.4/0",30,-.2,.2);
+  TF1 *y6  = new TF1("y6","gaus",-.05,.05);
+  TH1D *ry7= new TH1D("ry7","y 0/.4",30,-.2,.2);
+  TF1 *y7  = new TF1("y7","gaus",-.05,.05);
+  TH1D *ry8= new TH1D("ry8","y .4/.8",30,-.2,.2);
+  TF1 *y8  = new TF1("y8","gaus",-.05,.05);
+  TH1D *ry9= new TH1D("ry9","y .8/1.2",30,-.2,.2);
+  TF1 *y9  = new TF1("y9","gaus",-.05,.05);
+  TH1D *ry10= new TH1D("ry10","y 1.2/1.6",30,-.2,.2);
+  TF1 *y10  = new TF1("y10","gaus",-.05,.05);
+  TH1D *ry11= new TH1D("ry11","y 1.6/2",30,-.2,.2);
+  TF1 *y11  = new TF1("y11","gaus",-.05,.05);
+  TH1D *ry12= new TH1D("ry12","y 2/2.4",30,-.2,.2);
+  TF1 *y12  = new TF1("y12","gaus",-.05,.05);
+Float_t centBins[]={0,10,20,40,60,80,100,140,180};
+TH1D *acccorr= new TH1D("acccorr","",8,centBins);
+TH1D *acccorr2= new TH1D("acccorr2","",8,centBins);
 
 ////////////////////////////////////////////////////////////
   for(int k = 0; k<nBins; k++){
@@ -372,6 +403,17 @@ void doZ2EE(std::vector< std::string > files, int jobNumber){
           float scaleFactor = eTnP.getZSF(hiBin, elePt->at(goodElectrons.at(j)), eleSCEta->at(goodElectrons.at(j)), elePt->at(goodElectrons.at(j2)), eleSCEta->at(goodElectrons.at(j2)), 0) ;
 
 //////////////////////Fill Resolution Histograms////////////////////////
+//Acceptance Corrcetion 
+        if( TMath::Abs( mom.Rapidity()<2.1) && Zcand.M()>20 && Zcand.M()<120){
+        acccorr->Fill(v.centrality());
+        }
+      if( TMath::Abs( mom.Rapidity())<2.1 && Zcand.M()>20 && Zcand.M()<120 && v.PtD1()>20 && v.PtD2()>20 &&TMath::Abs( v.etaD1()) < 2.1 && TMath::Abs( v.etaD2()) < 2.1){
+       acccorr2->Fill(v.centrality());
+       }
+
+
+
+
   //Fill Response Histogram
   Response->Fill(Zcand.Pt(),mom.Pt());
   SmearResponse->Fill(Zcand.Pt() *r1->Gaus(1,0.05),mom.Pt());  
@@ -405,6 +447,42 @@ ybb->Fill(Zcand.Rapidity()/mom.Rapidity());
         }
 
 
+        if(mom.Rapidity()>-2.4&&mom.Rapidity()<-2.0){
+        ry1->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>-2.0&&mom.Rapidity()<-1.6){
+        ry2->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>-1.6&&mom.Rapidity()<-1.2){
+        ry3->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>-1.2&&mom.Rapidity()<-.8){
+        ry4->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>-.8&&mom.Rapidity()<-.4){
+        ry5->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>-.4&&mom.Rapidity()<0.0){
+        ry6->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>0.0&&mom.Rapidity()<.4){
+        ry7->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>.4&&mom.Rapidity()<.8){
+        ry8->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>.8&&mom.Rapidity()<1.2){
+        ry9->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>1.2&&mom.Rapidity()<1.6){
+        ry10->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>1.6&&mom.Rapidity()<2.0){
+        ry11->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+        }
+        else if(mom.Rapidity()>2.0&&mom.Rapidity()<2.4){
+        ry12->Fill((mom.Pt()-Zcand.Pt())/mom.Pt());
+}
 ///////////////////////////////////////////////////////////////////////
 
 
@@ -564,7 +642,79 @@ rc2->Fit(g2,"","",-.05,.05);
 rc3->Fit(g3,"","",-.05,.05);
 rc4->Fit(g4,"","",-.05,.05);
 
+ry1->Fit(y1,"","",-.05,.05);
+ry2->Fit(y2,"","",-.05,.05);
+ry3->Fit(y3,"","",-.05,.05);
+ry4->Fit(y4,"","",-.05,.05);
+ry5->Fit(y5,"","",-.05,.05);
+ry6->Fit(y6,"","",-.05,.05);
+ry7->Fit(y7,"","",-.05,.05);
+ry8->Fit(y8,"","",-.05,.05);
+ry9->Fit(y9,"","",-.05,.05);
+ry10->Fit(y10,"","",-.05,.05);
+ry11->Fit(y11,"","",-.05,.05);
+ry12->Fit(y12,"","",-.05,.05);
+
+Float_t y1b =y1 ->GetParameter(2);
+Float_t y2b =y2->GetParameter(2);
+Float_t y3b =y3->GetParameter(2);
+Float_t y4b =y4->GetParameter(2);
+Float_t y5b =y5->GetParameter(2);
+Float_t y6b =y6->GetParameter(2);
+Float_t y7b =y7->GetParameter(2);
+Float_t y8b =y8->GetParameter(2);
+Float_t y9b =y9->GetParameter(2);
+Float_t y10b =y10->GetParameter(2);
+Float_t y11b =y11->GetParameter(2);
+Float_t y12b =y12->GetParameter(2);
+Float_t y1e=y1->GetParError(2);
+Float_t y2e=y2->GetParError(2);
+Float_t y3e=y3->GetParError(2);
+Float_t y4e=y4->GetParError(2);
+Float_t y5e=y5->GetParError(2);
+Float_t y6e=y6->GetParError(2);
+Float_t y7e=y7->GetParError(2);
+Float_t y8e=y8->GetParError(2);
+Float_t y9e=y9->GetParError(2);
+Float_t y10e=y10->GetParError(2);
+Float_t y11e=y11->GetParError(2);
+Float_t y12e=y12->GetParError(2);
+
+Float_t biny[]={-2.4,-2.0,-1.6,-1.2,-0.8,-0.4,0.0,0.4,0.8,1.2,1.6,2.0,2.4};
+Int_t binnumy=12;
+TH1D*sigy=new TH1D("sigy","Sigma vs. y",binnumy,biny);
+sigy->SetBinContent(1,y1b);
+sigy->SetBinContent(2,y2b);
+sigy->SetBinContent(3,y3b);
+sigy->SetBinContent(4,y4b);
+sigy->SetBinContent(5,y5b);
+sigy->SetBinContent(6,y6b);
+sigy->SetBinContent(7,y7b);
+sigy->SetBinContent(8,y8b);
+sigy->SetBinContent(9,y9b);
+sigy->SetBinContent(10,y10b);
+sigy->SetBinContent(11,y11b);
+sigy->SetBinContent(12,y12b);
+sigy->SetBinError(1,y1e);
+sigy->SetBinError(2,y2e);
+sigy->SetBinError(3,y3e);
+sigy->SetBinError(4,y4e);
+sigy->SetBinError(5,y5e);
+sigy->SetBinError(6,y6e);
+sigy->SetBinError(7,y7e);
+sigy->SetBinError(8,y8e);
+sigy->SetBinError(9,y9e);
+sigy->SetBinError(10,y10e);
+sigy->SetBinError(11,y11e);
+sigy->SetBinError(12,y12e);
+sigy->SetYTitle("sigma");
+sigy->SetXTitle("y");
  
+TCanvas *sigyh = new TCanvas("sigyh","Sigma vs. y Resolution");
+sigy->Draw();
+ sigyh->SaveAs("plots/sigyhe.pdf");
+ sigyh->SaveAs("plots/sigyhe.png");
+
 res->SetDirectory(0);
 yreso->SetDirectory(0);
 genn->SetDirectory(0);
@@ -579,7 +729,19 @@ ybb->SetDirectory(0);
     rc2->SetDirectory(0);
     rc3->SetDirectory(0);
     rc4->SetDirectory(0);
-
+    ry1->SetDirectory(0);
+    ry2->SetDirectory(0);
+    ry3->SetDirectory(0);
+    ry4->SetDirectory(0);
+    ry5->SetDirectory(0);
+    ry6->SetDirectory(0);
+    ry7->SetDirectory(0);
+    ry8->SetDirectory(0);
+    ry8->SetDirectory(0);
+    ry9->SetDirectory(0);
+    ry10->SetDirectory(0);
+    ry11->SetDirectory(0);
+    ry12->SetDirectory(0);
 
   TCanvas *ccent=new TCanvas("ccent","Resolution centrality dependance");
   ccent->Divide(2,2);
@@ -602,6 +764,49 @@ ybb->SetDirectory(0);
 
  ccent->SaveAs("plots/ycentrese.pdf");
  ccent->SaveAs("plots/ycentrese.png");
+
+  TCanvas *cy=new TCanvas("cy","Resolution y dependance");
+  cy->Divide(3,4);
+  cy->cd(1);
+  ry1->Draw();
+  y1->Draw("same");
+  cy->cd(2);
+  ry2->Draw();
+  y2->Draw("same");
+  cy->cd(3);
+  ry3->Draw();
+  y3->Draw("same");
+  cy->cd(4);
+  ry4->Draw();
+  y4->Draw("same");
+  cy->cd(5);
+  ry5->Draw();
+  y5->Draw("same");
+  cy->cd(6);
+  ry6->Draw();
+  y6->Draw("same");
+  cy->cd(7);
+  ry7->Draw();
+  y7->Draw("same");
+  cy->cd(8);
+  ry8->Draw();
+  y8->Draw("same");
+  cy->cd(9);
+  ry9->Draw();
+  y9->Draw("same");
+  cy->cd(10);
+  ry10->Draw();
+  y10->Draw("same");
+  cy->cd(11);
+  ry11->Draw();
+  y11->Draw("same");
+  cy->cd(12);
+  ry12->Draw();
+  y12->Draw("same");
+
+
+ cy->SaveAs("plots/yrese.pdf");
+ cy->SaveAs("plots/yrese.png");
 
 TCanvas*yresoc=new TCanvas("yresoc","");
 yreso->GetXaxis()->SetTitle("mom.Rapidity-Zcand.Rapidity");
@@ -659,13 +864,30 @@ ybb->Write();
 
 ////////////////////////Make Canvas////////////////////////////////////
 
+TCanvas *acceptancecent=new TCanvas("acceptancecent", "Acceptance Correction");
+TH1D*acccent=(TH1D*) acccorr->Clone("acccent");
+acccent->Divide(acccorr2);
+acccent->Draw();
+acceptancecent->SaveAs("plots/acceptancecente.pdf");
+acceptancecent->SaveAs("plots/acceptancecente.png");
+
 TCanvas *Res = new TCanvas("Res","");
 res->Draw();
 Res->SaveAs("plots/rese.pdf");
+Res->SaveAs("plots/rese.png");
 
 TCanvas *response = new TCanvas("responsee","");
 Response->Draw();
 response->SaveAs("plots/responsee.pdf");
+
+ TCanvas * Responsec= new TCanvas("Responsec","");
+Response->GetYaxis()->SetTitle("ZCand.pT");
+Response->GetXaxis()->SetTitle("mom.pT");
+Responsec->SetLogz();
+Response->Draw("COLZ");
+Responsec->SaveAs("plots/Responsee.pdf");
+Responsec->SaveAs("plots/Responsee.png");
+
 
  TCanvas * yResponsec= new TCanvas("yResponsec","");
 yResponse->GetYaxis()->SetTitle("Zcand.Rapidity");
@@ -673,6 +895,8 @@ yResponse->GetXaxis()->SetTitle("mom.Rapidity");
 yResponsec->SetLogz();
 yResponse->Draw("COLZ");
 yResponsec->SaveAs("plots/yResponsee.pdf");
+yResponsec->SaveAs("plots/yResponsee.png");
+
 
 TCanvas *Yrate=new TCanvas("Yrate","");
 TH1D *yrat=(TH1D*) genny->Clone("yrat");
@@ -681,6 +905,7 @@ yrat->GetXaxis()->SetTitle("Rapidity");
 yrat->GetYaxis()->SetTitle("mom.Rapidity/Zcand.Rapidity");
 yrat->Draw();
 Yrate->SaveAs ("plots/Yrate.pdf");
+Yrate->SaveAs ("plots/Yrate.png");
 /////////////////////////////////////////////////////////////////////////
 
 
